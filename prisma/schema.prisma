@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  id Int @id @default(autoincrement())
+  nome_completo String
+  cpf_cnpj String
+  rg String
+  telefone String
+  rua String
+  email String
+  cidade_id Int
+  cep String
+  bairro String
+  numero_casa String
+  
+  data DateTime @default(now())
+}
+
+model Veiculo {
+  id Int @id @default(autoincrement())
+  placa String
+  v_cod_id Int
+  v_modelo_id Int
+  v_fabricante_id Int
+  c_cliente_id Int
+
+  data DateTime @default(now())
+}
+
+model Modelo {
+  id Int @id @default(autoincrement())
+  descricao String
+
+  data DateTime @default(now())
+}
+
+model Cor {
+  id Int @id @default(autoincrement())
+  descricao String
+
+  data DateTime @default(now())
+}
+
+model Fabricante {
+  id Int @id @default(autoincrement())
+  descricao String
+
+  data DateTime @default(now())
+}
