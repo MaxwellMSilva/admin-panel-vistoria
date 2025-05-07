@@ -8,6 +8,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+  } from "@/components/ui/sheet"
 
 type Cliente = {
     onSuccess: () => void
@@ -151,15 +161,8 @@ export function NovoClienteForm({ onSuccess, onCancel }: Cliente) {
     }, [])
 
     return (
-        <DialogContent ref={dialogContentRef}>
-            <DialogHeader>
-                <DialogTitle>Adicionar Novo Cliente</DialogTitle>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmit} ref={formRef}>
-                <div className="grid gap-4 py-4">
-                
-                    <div className="grid grid-cols-4 items-center gap-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 mt-4">
+            <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="nome_completo" className="text-right font-bold">
                             Nome:
                         </Label>
@@ -309,23 +312,16 @@ export function NovoClienteForm({ onSuccess, onCancel }: Cliente) {
                         />
                     </div>
 
-                </div>
-                
-                <DialogFooter>
-                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting} 
-                                className="hover:text-primary h-10 w-25 cursor-pointer font-semibold">
-                        Cancelar
-                    </Button>
-                    <Button type="submit" 
-                            className="bg-red-400 hover:bg-primary h-10 w-25 cursor-pointer font-semibold"
-                            disabled={isSubmitting || !formData.nome_completo}
-                            >
-                        {isSubmitting ? "Salvando..." : "Salvar"}
-                    </Button>
-                </DialogFooter>
+            {/* Adicione os demais campos aqui... */}
 
-            </form>
-            
-        </DialogContent>
+            <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Salvando..." : "Salvar"}
+                </Button>
+            </div>
+        </form>
     )
 }

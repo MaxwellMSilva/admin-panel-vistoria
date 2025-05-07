@@ -10,6 +10,16 @@ import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { Dialog } from "@/components/ui/dialog"
 import { NovoClienteForm } from "./clientes/novo-cliente-form"
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 
 type Cliente = {
   id: string
@@ -85,10 +95,29 @@ export function ClientesContent() {
     <Layout currentPage={currentPage} onNavigate={setCurrentPage}>
       <>
         <div className="flex justify-between items-center mb-6">
+
           <h1 className="text-2xl font-bold">Clientes</h1>
-          <Button className="bg-red-400 hover:bg-primary cursor-pointer" onClick={() => setIsDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4 font-semibold" />Novo Cliente
-          </Button>
+
+          <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <SheetTrigger asChild>
+              <Button className="bg-red-400 hover:bg-primary cursor-pointer">
+                <Plus className="mr-2 h-4 w-4 font-semibold" /> Novo Cliente
+              </Button>
+            </SheetTrigger>
+
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Novo Cliente</SheetTitle>
+                <SheetDescription>Cadastre um novo cliente abaixo.</SheetDescription>
+              </SheetHeader>
+
+              <NovoClienteForm
+                onSuccess={handleNovoClienteSuccess}
+                onCancel={() => setIsDialogOpen(false)}
+              />
+            </SheetContent>
+          </Sheet>
+
         </div>
 
         <div className="mb-6">
@@ -157,11 +186,6 @@ export function ClientesContent() {
             </div>
           )}
         </div>
-
-        {/* Modal para adicionar novo cliente */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <NovoClienteForm onSuccess={handleNovoClienteSuccess} onCancel={() => setIsDialogOpen(false)} />
-        </Dialog>
       </>
     </Layout> 
   )
