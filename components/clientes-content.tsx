@@ -7,8 +7,7 @@ import { useState, useEffect } from "react"
 import { Search, Plus, Trash2, Pencil, Printer } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { toast } from "sonner"
-import { Dialog } from "@/components/ui/dialog"
+import { toast } from "sonner"  
 import { NovoClienteForm } from "./clientes/novo-cliente-form"
 import {
   Sheet,

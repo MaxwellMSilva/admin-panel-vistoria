@@ -18,7 +18,6 @@ export function NovoCorForm({ onSuccess, onCancel }: Cor) {
     const [formData, setFormData] = useState({ descricao: "" })
     const [previewImage, setPreviewImage] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const dialogContentRef = useRef<HTMLDivElement>(null)
     const formRef = useRef<HTMLFormElement>(null) 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,7 +71,7 @@ export function NovoCorForm({ onSuccess, onCancel }: Cor) {
             })
         } catch (error: any) {
         console.error("Erro ao criar cor:", error)
-        toast.error(error.message || "Não foi possível criar o cor", {
+        toast.error(error.message || "Não foi possível criar a cor", {
             duration: 2000
         })
         } finally {
@@ -104,46 +103,31 @@ export function NovoCorForm({ onSuccess, onCancel }: Cor) {
     }, [])
 
     return (
-        <DialogContent ref={dialogContentRef}>
-            <DialogHeader>
-                <DialogTitle>Adicionar Nova Cor</DialogTitle>
-            </DialogHeader>
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 mt-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="descricao" className="text-right font-bold">
+                    Descrição:
+                </Label>
+                <Input
+                    id="descricao"
+                    name="descricao"
+                    placeholder="Digite a cor..."
+                    value={formData.descricao}
+                    onChange={handleChange}
+                    className="col-span-3"
+                    required
+                />
+            </div>
 
-            <form onSubmit={handleSubmit} ref={formRef}>
-                <div className="grid gap-4 py-4">
-                
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="descricao" className="text-right font-bold">
-                            Descrição:
-                        </Label>
-                        <Input
-                            id="descricao"
-                            name="descricao"
-                            placeholder="Digite a cor..."
-                            value={formData.descricao}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
 
-                </div>
-                
-                <DialogFooter>
-                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting} 
-                                className="hover:text-primary h-10 w-25 cursor-pointer font-semibold">
-                        Cancelar
-                    </Button>
-                    <Button type="submit" 
-                            className="bg-red-400 hover:bg-primary h-10 w-25 cursor-pointer font-semibold"
-                            disabled={isSubmitting || !formData.descricao}
-                            >
-                        {isSubmitting ? "Salvando..." : "Salvar"}
-                    </Button>
-                </DialogFooter>
-
-            </form>
-            
-        </DialogContent>
+            <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                    Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Salvando..." : "Salvar"}
+                </Button>
+            </div>
+        </form>
     )
 }

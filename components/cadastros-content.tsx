@@ -8,9 +8,7 @@ import { Search, Plus, Trash2, Pencil, Printer, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { Dialog } from "@/components/ui/dialog"
-import { NovoModeloForm } from "./cadastros/novo-modelo-form"
-import { NovoCorForm } from "./cadastros/novo-cor-form"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +26,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 
+import { NovoModeloForm } from "./cadastros/novo-modelo-form"
+import { NovoCorForm } from "./cadastros/novo-cor-form"
+import { NovoFabricanteForm } from "./cadastros/novo-fabricante-form" 
+
 type Modelo = {
   id: string
   descricao: string
@@ -38,34 +40,41 @@ type Cor = {
   descricao: string
 }
 
+type Fabricante = {
+  id: string
+  descricao: string
+}
+
 export function CadastrosContent() {
   const [modelos, setModelos] = useState<Modelo[]>([])
   const [cores, setCores] = useState<Cor[]>([])
+  const [fabricantes, setFabricante] = useState<Fabricante[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isModeloDialogOpen, setIsModeloDialogOpen] = useState(false)
   const [isCorDialogOpen, setIsCorDialogOpen] = useState(false)
+  const [isFabricanteDialogOpen, setIsFabricanteDialogOpen] = useState(false)
+  const [filterType, setFilterType] = useState("modelos");
 
-  const [selectedModelo, setSelectedModelo] = useState<Modelo | null>(null)
-
-  const fetchModelos = async () => {
+  const fetchModelos = async (page: number = 1) => {
     try {
-      setLoading(true)
-      const response = await fetch("/api/modelos")
-      if (!response.ok) throw new Error("Falha ao buscar modelos")
-
-      const data = await response.json()
-      setModelos(data)
+      const response = await fetch(`http://localhost:3000/api/v1/v_modelos?page=${page}`, {
+        method: 'GET',
+        headers: {
+          Authorization: 'Bearer <YOUR_TOKEN>', // Substitua pelo seu token
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error('Erro ao buscar modelos');
+      }
+  
+      const data = await response.json();
+      return data; // Retorne os modelos para uso posterior
     } catch (error) {
-      console.error("Erro ao buscar modelos:", error)
-      toast.error("Não foi possível carregar os modelos", {
-        duration: 2000,
-      })
-    } finally {
-      setLoading(false)
+      console.error('Erro ao buscar modelos:', error);
     }
-  }
+  };
 
   const handleNovoModeloSuccess = () => {
     fetchModelos()
@@ -95,11 +104,35 @@ export function CadastrosContent() {
     setIsCorDialogOpen(false)
   }
 
+  const fetchFabricantes = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/fabricantes")
+      if (!response.ok) throw new Error("Falha ao buscar fabricantes")
+
+      const data = await response.json()
+      setCores(data)
+    } catch (error) {
+      console.error("Erro ao buscar fabricantes:", error)
+      toast.error("Não foi possível carregar os fabricantes", {
+        duration: 2000,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleNovoFabricanteSuccess = () => {
+    fetchFabricantes()
+    setIsFabricanteDialogOpen(false)
+  }
+
 
 
   useEffect(() => {
     fetchModelos()
     fetchCores()
+    fetchFabricantes()
   }, [])
 
   const filteredModelos = modelos.filter(
@@ -108,41 +141,145 @@ export function CadastrosContent() {
         modelo.descricao.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
+  const filteredCores = cores.filter(
+    (cor) =>
+      cor.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cor.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+  
+  const filteredFabricantes = fabricantes.filter(
+    (fab) =>
+      fab.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fab.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
   const [currentPage, setCurrentPage] = useState("modelos")
 
   return (
     <Layout currentPage={currentPage} onNavigate={setCurrentPage}>
       <>
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-3">
          <h1 className="text-2xl font-bold">Cadastros</h1>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="bg-red-400 hover:bg-primary cursor-pointer">
-                <Menu className="mr-2 h-4 w-4 font-semibold"/> Novo Cadastro
-              </Button>
-            </DropdownMenuTrigger>
+        <DropdownMenu>
 
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setIsModeloDialogOpen(true)}>
-                Modelo
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsCorDialogOpen(true)}>
-                Cor
-              </DropdownMenuItem>
-              
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="bg-red-500 hover:bg-red-600 text-white font-medium rounded-md px-4 py-2 flex items-center gap-2">
+              <Menu className="h-4 w-4" />
+              Novo Cadastro
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent className="w-48 rounded-md shadow-lg bg-white border p-1">
+            <DropdownMenuItem asChild>
+              <Sheet open={isModeloDialogOpen} onOpenChange={setIsModeloDialogOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100"
+                  >
+                    Novo Modelo
+                  </Button>
+                </SheetTrigger>
+
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Novo Modelo</SheetTitle>
+                    <SheetDescription>Cadastre um novo modelo abaixo.</SheetDescription>
+                  </SheetHeader>
+
+                  <NovoModeloForm
+                    onSuccess={handleNovoModeloSuccess}
+                    onCancel={() => setIsModeloDialogOpen(false)}
+                  />
+                </SheetContent>
+              </Sheet>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem asChild>
+              <Sheet open={isCorDialogOpen} onOpenChange={setIsCorDialogOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100"
+                  >
+                    Nova Cor
+                  </Button>
+                </SheetTrigger>
+
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Nova Cor</SheetTitle>
+                    <SheetDescription>Cadastre uma nova cor abaixo.</SheetDescription>
+                  </SheetHeader>
+
+                  <NovoCorForm
+                    onSuccess={handleNovoCorSuccess}
+                    onCancel={() => setIsCorDialogOpen(false)}
+                  />
+                </SheetContent>
+              </Sheet>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem asChild>
+              <Sheet open={isFabricanteDialogOpen} onOpenChange={setIsFabricanteDialogOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100"
+                  >
+                    Novo Fabricante
+                  </Button>
+                </SheetTrigger>
+
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Novo Fabricante</SheetTitle>
+                    <SheetDescription>Cadastre um novo fabricante abaixo.</SheetDescription>
+                  </SheetHeader>
+
+                  <NovoFabricanteForm
+                    onSuccess={handleNovoFabricanteSuccess}
+                    onCancel={() => setIsFabricanteDialogOpen(false)}
+                  />
+                </SheetContent>
+              </Sheet>
+            </DropdownMenuItem>
+
+          </DropdownMenuContent>
+
+        </DropdownMenu>
+
         </div>
 
-        {/* <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Modelos</h1>
-          <Button className="bg-red-400 hover:bg-primary cursor-pointer" onClick={() => setIsDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4 font-semibold" />Novo Modelo
-          </Button>
-        </div> */}
+        <div className="mb-3">
+          <RadioGroup
+            value={filterType}
+            onValueChange={setFilterType}
+            className="flex items-center gap-6 mb-3"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="modelos" id="modelos" />
+              <label htmlFor="modelos" className="text-sm font-medium text-gray-700">
+                Modelos
+              </label>
+            </div>
 
-        <div className="mb-6">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="cores" id="cores" />
+              <label htmlFor="cores" className="text-sm font-medium text-gray-700">
+                Cores
+              </label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="fabricantes" id="fabricantes" />
+              <label htmlFor="fabricantes" className="text-sm font-medium text-gray-700">
+                Fabricantes
+              </label>
+            </div>
+          </RadioGroup>
+          
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <Input
@@ -152,6 +289,7 @@ export function CadastrosContent() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          
         </div>
 
         <div className="bg-white border rounded-md p-4">
@@ -170,17 +308,23 @@ export function CadastrosContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredModelos.length === 0 ? (
+                  {(filterType === "modelos" ? filteredModelos :
+                    filterType === "cores" ? filteredCores :
+                    filterType === "fabricantes" ? filteredFabricantes : []
+                  ).length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-gray-500">
                         Nenhum registro encontrado
                       </td>
                     </tr>
                   ) : (
-                    filteredModelos.map((modelo) => (
-                      <tr key={modelo.id} className="border-b">
-                        <td className="py-3 px-4">{modelo.id}</td>
-                        <td className="py-3 px-4 flex justify-center">{modelo.descricao}</td>
+                    (filterType === "modelos" ? filteredModelos :
+                    filterType === "cores" ? filteredCores :
+                    filterType === "fabricantes" ? filteredFabricantes : []
+                    ).map((item) => (
+                      <tr key={item.id} className="border-b">
+                        <td className="py-3 px-4">{item.id}</td>
+                        <td className="py-3 px-4 flex justify-center">{item.descricao}</td>
                         <td className="py-3 px-4">
                           <div className="flex justify-end gap-2">
                             <Button
@@ -194,7 +338,6 @@ export function CadastrosContent() {
                               variant="destructive"
                               size="icon"
                               className="cursor-pointer bg-red-400 hover:bg-primary"
-                              // onClick={() => handleDelete(modelo.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -208,16 +351,6 @@ export function CadastrosContent() {
             </div>
           )}
         </div>
-
-        {/* Modal para adicionar novo modelo */}
-        <Dialog open={isModeloDialogOpen} onOpenChange={setIsModeloDialogOpen}>
-          <NovoModeloForm onSuccess={handleNovoModeloSuccess} onCancel={() => setIsModeloDialogOpen(false)} />
-        </Dialog>
-
-        {/* Modal para adicionar nova cor */}
-        <Dialog open={isCorDialogOpen} onOpenChange={setIsCorDialogOpen}>
-          <NovoCorForm onSuccess={handleNovoCorSuccess} onCancel={() => setIsCorDialogOpen(false)} />
-        </Dialog>
       </>
     </Layout> 
   )
