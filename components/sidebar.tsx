@@ -1,44 +1,36 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Users, LayoutDashboard, PlusIcon, Menu } from "lucide-react"
+import { Users, LayoutDashboard, PlusIcon, Menu, Car } from "lucide-react"
 
-interface SidebarProps {
-  currentPage: string
-  onNavigate: (page: string) => void
-}
-
-export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
+export function Sidebar() {
+  const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 
-  const navItems = [
-    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Clientes", href: "/clientes", icon: Users },
-    { label: "Veículos", href: "/veiculos", icon: Users },
-    { label: "Cadastros", href: "/cadastros", icon: PlusIcon },
-  ]
+  useEffect(() => {
+    setIsOpen(false)
+  }, [pathname])
 
   return (
     <>
-      {/* Sidebar no desktop */}
       <div className="hidden md:flex md:flex-col border-r bg-card/50 backdrop-blur-sm md:w-64 lg:w-72 dark:bg-[#0f172a]/95 dark:border-[#334155]/50">
-        <SidebarContent currentPage={currentPage} onNavigate={onNavigate} />
+        <SidebarContent />
       </div>
 
-      {/* Botão de menu + sidebar drawer no mobile */}
       <div className="md:hidden fixed top-4 left-4 z-50">
-        <Sheet>
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon">
               <Menu className="w-5 h-5" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
-            <SidebarContent currentPage={currentPage} onNavigate={onNavigate} />
+            <SidebarContent onItemClick={() => setIsOpen(false)} />
           </SheetContent>
         </Sheet>
       </div>
@@ -46,16 +38,14 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   )
 }
 
-// Component separado para evitar duplicação
-function SidebarContent({
-  currentPage,
-  onNavigate,
-}: SidebarProps) {
+function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
+  const pathname = usePathname()
+
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Clientes", href: "/clientes", icon: Users },
-    { label: "Veículos", href: "/veiculos", icon: Users },
     { label: "Cadastros", href: "/cadastros", icon: PlusIcon },
+    { label: "Clientes", href: "/clientes", icon: Users },
+    { label: "Veículos", href: "/veiculos", icon: Car },
   ]
 
   return (
@@ -71,15 +61,16 @@ function SidebarContent({
 
       <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => (
-          <Link href={item.href} key={item.href}>
+          <Link href={item.href} key={item.href} onClick={onItemClick}>
             <Button
-              variant={currentPage === item.href ? "default" : "ghost"}
+              variant={pathname.startsWith(item.href) ? "default" : "ghost"}
               className={cn(
                 "w-full justify-start gap-3 text-base h-12",
-                currentPage === item.href ? "font-medium bg-primary text-white" : "font-normal",
+                pathname.startsWith(item.href)
+                  ? "font-medium bg-primary text-white"
+                  : "font-normal",
                 "dark:hover:bg-[#1e293b]/70 dark:text-gray-200"
               )}
-              onClick={() => onNavigate(item.href)}
             >
               <item.icon className="h-5 w-5" />
               {item.label}

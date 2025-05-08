@@ -17,9 +17,7 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          
             {children}
-          
         </ThemeProvider>
       </body>
     </html>

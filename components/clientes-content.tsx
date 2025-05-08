@@ -92,45 +92,47 @@ export function ClientesContent() {
 
   return (
     <Layout currentPage={currentPage} onNavigate={setCurrentPage}>
-      <>
-      <div className="flex flex-row justify-between md:flex-row md:justify-between items-center mb-6 gap-4 text-center">
+      <div className="flex flex-col gap-6 px-4 pb-10 w-full max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:justify-between items-center gap-4">
           <h1 className="text-2xl font-bold">Clientes</h1>
 
           <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <SheetTrigger asChild>
               <Button className="bg-red-400 hover:bg-primary cursor-pointer">
-                <Plus className="mr-2 h-4 w-4 font-semibold" /> Novo Cliente
+                <Plus className="mr-2 h-4 w-4" /> Novo Cliente
               </Button>
             </SheetTrigger>
 
             <SheetContent className="max-h-screen overflow-auto p-4">
               <SheetHeader>
                 <SheetTitle className="text-xl font-semibold">Novo Cliente</SheetTitle>
-                <SheetDescription className="text-sm">
-                  Cadastre um novo cliente abaixo.
-                </SheetDescription>
+                <SheetDescription>Cadastre um novo cliente abaixo.</SheetDescription>
               </SheetHeader>
 
               <NovoClienteForm
-                onSuccess={handleNovoClienteSuccess}
+                onSuccess={() => {
+                  setIsDialogOpen(false)
+                  location.reload() // ou refaça o fetch se preferir
+                }}
                 onCancel={() => setIsDialogOpen(false)}
               />
             </SheetContent>
           </Sheet>
         </div>
 
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              className="pl-10 w-full"
-              placeholder="Buscar clientes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+        {/* Busca */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Input
+            className="pl-10 w-full"
+            placeholder="Buscar clientes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
 
+        {/* Tabela */}
         <div className="bg-white border rounded-md p-4 overflow-x-auto">
           <h2 className="text-lg font-semibold mb-2">Lista de Clientes</h2>
           <p className="text-sm text-gray-500 mb-4">Total de {filteredClientes.length} clientes encontrados</p>
@@ -138,18 +140,18 @@ export function ClientesContent() {
           {loading ? (
             <div className="py-8 text-center">Carregando clientes...</div>
           ) : (
-            <table className="w-full min-w-[400px]">
+            <table className="w-full min-w-[600px]">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-semibold">Nome:</th>
-                  <th className="py-3 px-4 font-semibold text-center">CPF/CNPJ:</th>
-                  <th className="py-3 px-4 font-semibold text-right">Ações:</th>
+                  <th className="text-left py-3 px-4">Nome</th>
+                  <th className="text-center py-3 px-4">CPF/CNPJ</th>
+                  <th className="text-right py-3 px-4">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredClientes.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="py-8 text-center text-gray-500">
+                    <td colSpan={3} className="text-center py-8 text-gray-500">
                       Nenhum cliente encontrado
                     </td>
                   </tr>
@@ -160,18 +162,20 @@ export function ClientesContent() {
                       <td className="py-3 px-4 text-center">{cliente.cpf_cnpj}</td>
                       <td className="py-3 px-4">
                         <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="cursor-pointer bg-amber-200 hover:bg-amber-400 hover:text-black"
-                          >
+                          <Button variant="outline" size="icon" className="bg-amber-200 hover:bg-amber-400">
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="destructive"
                             size="icon"
-                            className="cursor-pointer bg-red-400 hover:bg-primary"
-                            onClick={() => handleDelete(cliente.id)}
+                            className="bg-red-400 hover:bg-primary"
+                            onClick={() => {
+                              if (confirm("Excluir cliente?")) {
+                                fetch(`/api/clientes/${cliente.id}`, { method: "DELETE" }).then(() =>
+                                  location.reload()
+                                )
+                              }
+                            }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -184,7 +188,7 @@ export function ClientesContent() {
             </table>
           )}
         </div>
-      </>
-    </Layout> 
+      </div>
+    </Layout>
   )
 }
