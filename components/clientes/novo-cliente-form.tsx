@@ -162,164 +162,162 @@ export function NovoClienteForm({ onSuccess, onCancel }: Cliente) {
 
     return (
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 mt-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="nome_completo" className="text-right font-bold">
-                            Nome:
-                        </Label>
-                        <Input
-                            id="nome_completo"
-                            name="nome_completo"
-                            placeholder="Digite o NOME COMPLETO do cliente..."
-                            value={formData.nome_completo}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="nome_completo" className="text-left font-bold">
+                    Nome:
+                </Label>
+                <Input
+                    id="nome_completo"
+                    name="nome_completo"
+                    placeholder="Digite o NOME COMPLETO do cliente..."
+                    value={formData.nome_completo}
+                    onChange={handleChange}
+                    className="col-span-3 w-full"
+                    required
+                />
+            </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="cpf_cnpj" className="text-right font-bold">
-                            CPF/CNPJ:
-                        </Label>
-                        <Input
-                            id="cpf_cnpj"
-                            name="cpf_cnpj"
-                            placeholder="Digite o CPF/CNPJ do cliente..."
-                            value={formData.cpf_cnpj}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="cpf_cnpj" className="text-left font-bold">
+                    CPF/CNPJ:
+                </Label>
+                <Input
+                    id="cpf_cnpj"
+                    name="cpf_cnpj"
+                    placeholder="Digite o CPF/CNPJ do cliente..."
+                    value={formData.cpf_cnpj}
+                    onChange={handleChange}
+                    className="col-span-3 w-full"
+                    required
+                />
+            </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="rg" className="text-right font-bold">
-                            RG:
-                        </Label>
-                        <Input
-                            id="rg"
-                            name="rg"
-                            placeholder="Digite o RG do cliente..."
-                            value={formData.rg}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="rg" className="text-left font-bold">
+                RG:
+                </Label>
+                <Input
+                id="rg"
+                name="rg"
+                placeholder="Digite o RG do cliente..."
+                value={formData.rg}
+                onChange={handleChange}
+                className="col-span-3 w-full"
+                required
+                />
+            </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="telefone" className="text-right font-bold">
-                            Telefone:
-                        </Label>
-                        <Input
-                            id="telefone"
-                            name="telefone"
-                            placeholder="Digite o TELEFONE do cliente..."
-                            value={formData.telefone}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="telefone" className="text-left font-bold">
+                    Telefone:
+                </Label>
+                <Input
+                    id="telefone"
+                    name="telefone"
+                    placeholder="Digite o TELEFONE do cliente..."
+                    value={formData.telefone}
+                    onChange={handleChange}
+                    className="col-span-3 w-full"
+                    required
+                />
+            </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="rua" className="text-right font-bold">
-                            Rua:
-                        </Label>
-                        <Input
-                            id="rua"
-                            name="rua"
-                            placeholder="Digite a RUA do cliente..."
-                            value={formData.rua}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="rua" className="text-left font-bold">
+                    Rua:
+                </Label>
+                <Input
+                    id="rua"
+                    name="rua"
+                    placeholder="Digite a RUA do cliente..."
+                    value={formData.rua}
+                    onChange={handleChange}
+                    className="col-span-3 w-full"
+                    required
+                />
+            </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="email" className="text-right font-bold">
-                            Email:
-                        </Label>
-                        <Input
-                            id="email"
-                            name="email"
-                            placeholder="Digite o EMAIL do cliente..."
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-left font-bold">
+                    Email:
+                </Label>
+                <Input
+                    id="email"
+                    name="email"
+                    placeholder="Digite o EMAIL do cliente..."
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="col-span-3 w-full"
+                    required
+                />
+            </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="cidade_id" className="text-right font-bold">
-                            Cidade:
-                        </Label>
-                        <Input
-                            id="cidade_id"
-                            name="cidade_id"
-                            placeholder="Digite o CÓDIGO DA CIDADE do cliente..."
-                            value={formData.cidade_id}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="cidade_id" className="text-left font-bold">
+                    Cidade:
+                </Label>
+                <Input
+                    id="cidade_id"
+                    name="cidade_id"
+                    placeholder="Digite o CÓDIGO DA CIDADE do cliente..."
+                    value={formData.cidade_id}
+                    onChange={handleChange}
+                    className="col-span-3 w-full"
+                    required
+                />
+            </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="cep" className="text-right font-bold">
-                            CEP:
-                        </Label>
-                        <Input
-                            id="cep"
-                            name="cep"
-                            placeholder="Digite o CEP do cliente..."
-                            value={formData.cep}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="cep" className="text-left font-bold">
+                    CEP:
+                </Label>
+                <Input
+                    id="cep"
+                    name="cep"
+                    placeholder="Digite o CEP do cliente..."
+                    value={formData.cep}
+                    onChange={handleChange}
+                    className="col-span-3 w-full"
+                    required
+                />
+            </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="bairro" className="text-right font-bold">
-                            Bairro:
-                        </Label>
-                        <Input
-                            id="bairro"
-                            name="bairro"
-                            placeholder="Digite o BAIRRO do cliente..."
-                            value={formData.bairro}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="bairro" className="text-left font-bold">
+                    Bairro:
+                </Label>
+                <Input
+                    id="bairro"
+                    name="bairro"
+                    placeholder="Digite o BAIRRO do cliente..."
+                    value={formData.bairro}
+                    onChange={handleChange}
+                    className="col-span-3 w-full"
+                    required
+                />
+            </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="numero_casa" className="text-right font-bold">
-                            Número:
-                        </Label>
-                        <Input
-                            id="numero_casa"
-                            name="numero_casa"
-                            placeholder="Digite o NÚMERO DA CASA do cliente..."
-                            value={formData.numero_casa}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
-
-            {/* Adicione os demais campos aqui... */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="numero_casa" className="text-left font-bold">
+                    Número:
+                </Label>
+                <Input
+                    id="numero_casa"
+                    name="numero_casa"
+                    placeholder="Digite o NÚMERO DA CASA do cliente..."
+                    value={formData.numero_casa}
+                    onChange={handleChange}
+                    className="col-span-3 w-full"
+                    required
+                />
+            </div>
 
             <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={handleCancel}>
-                Cancelar
+                    Cancelar
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Salvando..." : "Salvar"}
+                    {isSubmitting ? "Salvando..." : "Salvar"}
                 </Button>
             </div>
         </form>

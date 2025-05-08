@@ -29,6 +29,8 @@ import {
 import { NovoModeloForm } from "./cadastros/novo-modelo-form"
 import { NovoCorForm } from "./cadastros/novo-cor-form"
 import { NovoFabricanteForm } from "./cadastros/novo-fabricante-form" 
+import { NovoStatusForm } from "./cadastros/novo-status-form"
+import { NovoCategoriaForm } from "./cadastros/novo-categoria-form"
 
 type Modelo = {
   id: string
@@ -45,16 +47,32 @@ type Fabricante = {
   descricao: string
 }
 
+type Status = {
+  id: string
+  descricao: string
+}
+
+type Categoria = {
+  id: string
+  descricao: string
+}
+
 export function CadastrosContent() {
   const [modelos, setModelos] = useState<Modelo[]>([])
   const [cores, setCores] = useState<Cor[]>([])
   const [fabricantes, setFabricante] = useState<Fabricante[]>([])
+  const [status, setStatus] = useState<Status[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [filterType, setFilterType] = useState("modelos");
+
   const [isModeloDialogOpen, setIsModeloDialogOpen] = useState(false)
   const [isCorDialogOpen, setIsCorDialogOpen] = useState(false)
   const [isFabricanteDialogOpen, setIsFabricanteDialogOpen] = useState(false)
-  const [filterType, setFilterType] = useState("modelos");
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false)
+  const [isCategoriaDialogOpen, setIsCategoriaDialogOpen] = useState(false)
 
   const fetchModelos = async (page: number = 1) => {
     try {
@@ -74,7 +92,7 @@ export function CadastrosContent() {
     } catch (error) {
       console.error('Erro ao buscar modelos:', error);
     }
-  };
+  }
 
   const handleNovoModeloSuccess = () => {
     fetchModelos()
@@ -127,12 +145,64 @@ export function CadastrosContent() {
     setIsFabricanteDialogOpen(false)
   }
 
+  const fetchStatus = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/status")
+      if (!response.ok) throw new Error("Falha ao buscar status")
+
+      const data = await response.json()
+      setCores(data)
+    } catch (error) {
+      console.error("Erro ao buscar status:", error)
+      toast.error("Não foi possível carregar os status", {
+        duration: 2000,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleNovoStatusSuccess = () => {
+    fetchStatus()
+    setIsStatusDialogOpen(false)
+  }
+
+  const fetchCategorias = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/categorias")
+      if (!response.ok) throw new Error("Falha ao buscar categorias")
+
+      const data = await response.json()
+      setCores(data)
+    } catch (error) {
+      console.error("Erro ao buscar categorias:", error)
+      toast.error("Não foi possível carregar os categorias", {
+        duration: 2000,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleNovoCategoriaSuccess = () => {
+    fetchCategorias()
+    setIsCategoriaDialogOpen(false)
+  }
+
+
+
+
+
 
 
   useEffect(() => {
     fetchModelos()
     fetchCores()
     fetchFabricantes()
+    fetchStatus()
+    fetchCategorias()
   }, [])
 
   const filteredModelos = modelos.filter(
@@ -153,142 +223,219 @@ export function CadastrosContent() {
       fab.descricao.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const filteredStatus = cores.filter(
+    (cor) =>
+      cor.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cor.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+  
+  const filteredCategorias = fabricantes.filter(
+    (fab) =>
+      fab.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fab.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
   const [currentPage, setCurrentPage] = useState("modelos")
 
   return (
     <Layout currentPage={currentPage} onNavigate={setCurrentPage}>
       <>
-        <div className="flex justify-between items-center mb-3">
-         <h1 className="text-2xl font-bold">Cadastros</h1>
+        <div className="flex justify-between items-center mb-3 flex-wrap gap-4">
+          <h1 className="text-2xl font-bold">Cadastros</h1>
 
-        <DropdownMenu>
+          <DropdownMenu>
 
-          <DropdownMenuTrigger asChild>
-            <Button className="bg-red-500 hover:bg-red-600 text-white font-medium rounded-md px-4 py-2 flex items-center gap-2">
-              <Menu className="h-4 w-4" />
-              Novo Cadastro
-            </Button>
-          </DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-red-500 hover:bg-red-600 text-white font-medium rounded-md px-4 py-2 flex items-center gap-2">
+                <Menu className="h-4 w-4" />
+                Novo Cadastro
+              </Button>
+            </DropdownMenuTrigger>
 
-          <DropdownMenuContent className="w-48 rounded-md shadow-lg bg-white border p-1">
-            <DropdownMenuItem asChild>
-              <Sheet open={isModeloDialogOpen} onOpenChange={setIsModeloDialogOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100"
-                  >
-                    Novo Modelo
-                  </Button>
-                </SheetTrigger>
+            <DropdownMenuContent className="w-48 rounded-md shadow-lg bg-white border p-1">
 
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Novo Modelo</SheetTitle>
-                    <SheetDescription>Cadastre um novo modelo abaixo.</SheetDescription>
-                  </SheetHeader>
+              <DropdownMenuItem asChild>
+                <Sheet open={isModeloDialogOpen} onOpenChange={setIsModeloDialogOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100"
+                    >
+                      Novo Modelo
+                    </Button>
+                  </SheetTrigger>
 
-                  <NovoModeloForm
-                    onSuccess={handleNovoModeloSuccess}
-                    onCancel={() => setIsModeloDialogOpen(false)}
-                  />
-                </SheetContent>
-              </Sheet>
-            </DropdownMenuItem>
+                  <SheetContent className="max-h-screen overflow-auto p-4">
+                    <SheetHeader>
+                      <SheetTitle className="text-xl font-semibold">Novo Modelo</SheetTitle>
+                      <SheetDescription className="text-sm">
+                        Cadastre um novo modelo abaixo.
+                      </SheetDescription>
+                    </SheetHeader>
 
-            <DropdownMenuItem asChild>
-              <Sheet open={isCorDialogOpen} onOpenChange={setIsCorDialogOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100"
-                  >
-                    Nova Cor
-                  </Button>
-                </SheetTrigger>
+                    <NovoModeloForm
+                      onSuccess={handleNovoModeloSuccess}
+                      onCancel={() => setIsModeloDialogOpen(false)}
+                    />
+                  </SheetContent>
+                </Sheet>
+              </DropdownMenuItem>
 
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Nova Cor</SheetTitle>
-                    <SheetDescription>Cadastre uma nova cor abaixo.</SheetDescription>
-                  </SheetHeader>
+              <DropdownMenuItem asChild>
+                <Sheet open={isCorDialogOpen} onOpenChange={setIsCorDialogOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100"
+                    >
+                      Nova Cor
+                    </Button>
+                  </SheetTrigger>
 
-                  <NovoCorForm
-                    onSuccess={handleNovoCorSuccess}
-                    onCancel={() => setIsCorDialogOpen(false)}
-                  />
-                </SheetContent>
-              </Sheet>
-            </DropdownMenuItem>
+                  <SheetContent className="max-h-screen overflow-auto p-4">
+                    <SheetHeader>
+                      <SheetTitle className="text-xl font-semibold">Nova Cor</SheetTitle>
+                      <SheetDescription className="text-sm">
+                        Cadastre uma nova cor abaixo.
+                      </SheetDescription>
+                    </SheetHeader>
 
-            <DropdownMenuItem asChild>
-              <Sheet open={isFabricanteDialogOpen} onOpenChange={setIsFabricanteDialogOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100"
-                  >
-                    Novo Fabricante
-                  </Button>
-                </SheetTrigger>
+                    <NovoCorForm
+                      onSuccess={handleNovoCorSuccess}
+                      onCancel={() => setIsCorDialogOpen(false)}
+                    />
+                  </SheetContent>
+                </Sheet>
+              </DropdownMenuItem>
 
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Novo Fabricante</SheetTitle>
-                    <SheetDescription>Cadastre um novo fabricante abaixo.</SheetDescription>
-                  </SheetHeader>
+              <DropdownMenuItem asChild>
+                <Sheet open={isFabricanteDialogOpen} onOpenChange={setIsFabricanteDialogOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100"
+                    >
+                      Novo Fabricante
+                    </Button>
+                  </SheetTrigger>
 
-                  <NovoFabricanteForm
-                    onSuccess={handleNovoFabricanteSuccess}
-                    onCancel={() => setIsFabricanteDialogOpen(false)}
-                  />
-                </SheetContent>
-              </Sheet>
-            </DropdownMenuItem>
+                  <SheetContent className="max-h-screen overflow-auto p-4">
+                    <SheetHeader>
+                      <SheetTitle className="text-xl font-semibold">Novo Fabricante</SheetTitle>
+                      <SheetDescription className="text-sm">
+                        Cadastre um novo fabricante abaixo.
+                      </SheetDescription>
+                    </SheetHeader>
 
-          </DropdownMenuContent>
+                    <NovoFabricanteForm
+                      onSuccess={handleNovoFabricanteSuccess}
+                      onCancel={() => setIsFabricanteDialogOpen(false)}
+                    />
+                  </SheetContent>
+                </Sheet>
+              </DropdownMenuItem>
 
-        </DropdownMenu>
+              <DropdownMenuItem asChild>
+                <Sheet open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100"
+                    >
+                      Novo Status
+                    </Button>
+                  </SheetTrigger>
+
+                  <SheetContent className="max-h-screen overflow-auto p-4">
+                    <SheetHeader>
+                      <SheetTitle className="text-xl font-semibold">Novo Status</SheetTitle>
+                      <SheetDescription className="text-sm">
+                        Cadastre um novo status abaixo.
+                      </SheetDescription>
+                    </SheetHeader>
+
+                    <NovoStatusForm
+                      onSuccess={handleNovoStatusSuccess}
+                      onCancel={() => setIsStatusDialogOpen(false)}
+                    />
+                  </SheetContent>
+                </Sheet>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem asChild>
+                <Sheet open={isCategoriaDialogOpen} onOpenChange={setIsCategoriaDialogOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100">
+                      Nova Categoria
+                    </Button>
+                  </SheetTrigger>
+
+                  <SheetContent className="max-h-screen overflow-auto p-4">
+                    <SheetHeader>
+                      <SheetTitle className="text-xl font-semibold">Nova Categoria</SheetTitle>
+                      <SheetDescription className="text-sm">
+                        Cadastre uma nova categoria abaixo.
+                      </SheetDescription>
+                    </SheetHeader>
+
+                    <NovoCategoriaForm
+                      onSuccess={handleNovoCategoriaSuccess}
+                      onCancel={() => setIsCategoriaDialogOpen(false)}
+                    />
+                  </SheetContent>
+                </Sheet>
+              </DropdownMenuItem>
+
+            </DropdownMenuContent>
+
+          </DropdownMenu>
 
         </div>
 
         <div className="mb-3">
+
           <RadioGroup
-            value={filterType}
-            onValueChange={setFilterType}
-            className="flex items-center gap-6 mb-3"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="modelos" id="modelos" />
-              <label htmlFor="modelos" className="text-sm font-medium text-gray-700">
-                Modelos
-              </label>
-            </div>
+              value={filterType}
+              onValueChange={setFilterType}
+              className="flex items-center gap-6 mb-3 flex-wrap cursor-pointer"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="modelos" id="modelos" />
+                <label htmlFor="modelos" className="text-sm font-medium text-gray-700">
+                  Modelos
+                </label>
+              </div>
 
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="cores" id="cores" />
-              <label htmlFor="cores" className="text-sm font-medium text-gray-700">
-                Cores
-              </label>
-            </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="cores" id="cores" />
+                <label htmlFor="cores" className="text-sm font-medium text-gray-700">
+                  Cores
+                </label>
+              </div>
 
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="fabricantes" id="fabricantes" />
-              <label htmlFor="fabricantes" className="text-sm font-medium text-gray-700">
-                Fabricantes
-              </label>
-            </div>
-          </RadioGroup>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="fabricantes" id="fabricantes" />
+                <label htmlFor="fabricantes" className="text-sm font-medium text-gray-700">
+                  Fabricantes
+                </label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="status" id="status" />
+                <label htmlFor="status" className="text-sm font-medium text-gray-700">
+                  Status
+                </label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="categorias" id="categorias" />
+                <label htmlFor="categorias" className="text-sm font-medium text-gray-700">
+                  Categorias
+                </label>
+              </div>
+            </RadioGroup>
           
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              className="pl-10 w-full"
-              placeholder="Buscar cadastros..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Input
+                className="pl-10 w-full"
+                placeholder="Buscar cadastros..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           
         </div>
 

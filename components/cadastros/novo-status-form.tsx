@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-type Fabricante = {
+type Status = {
     onSuccess: () => void
     onCancel: () => void
 }
 
-export function NovoFabricanteForm({ onSuccess, onCancel }: Fabricante) {
+export function NovoStatusForm({ onSuccess, onCancel }: Status) {
     const [formData, setFormData] = useState({ descricao: "" })
     const [previewImage, setPreviewImage] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -37,7 +37,7 @@ export function NovoFabricanteForm({ onSuccess, onCancel }: Fabricante) {
         try {
             setIsSubmitting(true)
 
-            const response = await fetch("/api/fabricantes", {
+            const response = await fetch("/api/status", {
                 method: "POST",
                 headers: {
                 "Content-Type": "application/json",
@@ -48,7 +48,7 @@ export function NovoFabricanteForm({ onSuccess, onCancel }: Fabricante) {
             })
 
             if (!response.ok) {
-                let errorMessage = "Falha ao criar fabricantes"
+                let errorMessage = "Falha ao criar status"
                 try {
                 const errorData = await response.json()
                 if (errorData && errorData.error) {
@@ -60,7 +60,7 @@ export function NovoFabricanteForm({ onSuccess, onCancel }: Fabricante) {
                 throw new Error(errorMessage)
             }
 
-            toast.success("Fabricante criado com sucesso", {
+            toast.success("Status criado com sucesso", {
             duration: 2000
             })
             onSuccess()
@@ -69,8 +69,8 @@ export function NovoFabricanteForm({ onSuccess, onCancel }: Fabricante) {
                 descricao: ""
             })
         } catch (error: any) {
-        console.error("Erro ao criar fabricante:", error)
-        toast.error(error.message || "Não foi possível criar a fabricante", {
+        console.error("Erro ao criar status:", error)
+        toast.error(error.message || "Não foi possível criar a status", {
             duration: 2000
         })
         } finally {
@@ -110,7 +110,7 @@ export function NovoFabricanteForm({ onSuccess, onCancel }: Fabricante) {
                 <Input
                     id="descricao"
                     name="descricao"
-                    placeholder="Digite o fabricante..."
+                    placeholder="Digite o status..."
                     value={formData.descricao}
                     onChange={handleChange}
                     className="col-span-3 w-full"

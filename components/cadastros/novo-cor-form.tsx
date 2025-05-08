@@ -7,7 +7,6 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 type Cor = {
     onSuccess: () => void
@@ -49,7 +48,7 @@ export function NovoCorForm({ onSuccess, onCancel }: Cor) {
             })
 
             if (!response.ok) {
-                let errorMessage = "Falha ao criar cor"
+                let errorMessage = "Falha ao criar cores"
                 try {
                 const errorData = await response.json()
                 if (errorData && errorData.error) {
@@ -104,8 +103,8 @@ export function NovoCorForm({ onSuccess, onCancel }: Cor) {
 
     return (
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 mt-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="descricao" className="text-right font-bold">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="descricao" className="text-left font-bold">
                     Descrição:
                 </Label>
                 <Input
@@ -114,7 +113,7 @@ export function NovoCorForm({ onSuccess, onCancel }: Cor) {
                     placeholder="Digite a cor..."
                     value={formData.descricao}
                     onChange={handleChange}
-                    className="col-span-3"
+                    className="col-span-3 w-full"
                     required
                 />
             </div>

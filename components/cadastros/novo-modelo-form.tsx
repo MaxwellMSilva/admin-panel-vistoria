@@ -3,8 +3,6 @@
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 
-import { cadastrarModelo } from "@/app/api/modelos/route"
-
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +17,6 @@ export function NovoModeloForm({ onSuccess, onCancel }: Modelo) {
     const [formData, setFormData] = useState({ descricao: "" })
     const [previewImage, setPreviewImage] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [mensagem, setMensagem] = useState('')
     const formRef = useRef<HTMLFormElement>(null) 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,20 +33,50 @@ export function NovoModeloForm({ onSuccess, onCancel }: Modelo) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setIsSubmitting(true)
-        setMensagem('')
-    
+
         try {
-            await cadastrarModelo(formData.descricao)
-            toast.success('✅ Modelo cadastrado com sucesso!')
-            setFormData({ descricao: '' })
+            setIsSubmitting(true)
+
+            const response = await fetch("/api/modelos", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    descricao: formData.descricao
+                }),
+            })
+
+            if (!response.ok) {
+                let errorMessage = "Falha ao criar modelos"
+                try {
+                const errorData = await response.json()
+                if (errorData && errorData.error) {
+                    errorMessage = errorData.error
+                }
+                } catch (parseError) {
+                console.error("Erro ao processar resposta de erro:", parseError)
+                }
+                throw new Error(errorMessage)
+            }
+
+            toast.success("Modelo criado com sucesso", {
+            duration: 2000
+            })
             onSuccess()
-        } catch (error) {
-            toast.error('❌ Erro ao cadastrar modelo.')
+
+            setFormData({ 
+                descricao: ""
+            })
+        } catch (error: any) {
+        console.error("Erro ao criar modelo:", error)
+        toast.error(error.message || "Não foi possível criar a modelo", {
+            duration: 2000
+        })
         } finally {
-            setIsSubmitting(false)
+        setIsSubmitting(false)
         }
-      }
+    }
 
     const handleCancel = () => {
         setFormData({
@@ -76,8 +103,8 @@ export function NovoModeloForm({ onSuccess, onCancel }: Modelo) {
 
     return (
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 mt-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="descricao" className="text-right font-bold">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                <Label htmlFor="descricao" className="text-left font-bold">
                     Descrição:
                 </Label>
                 <Input
@@ -86,7 +113,7 @@ export function NovoModeloForm({ onSuccess, onCancel }: Modelo) {
                     placeholder="Digite o modelo..."
                     value={formData.descricao}
                     onChange={handleChange}
-                    className="col-span-3"
+                    className="col-span-3 w-full"
                     required
                 />
             </div>

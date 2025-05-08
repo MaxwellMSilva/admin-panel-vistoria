@@ -93,8 +93,7 @@ export function ClientesContent() {
   return (
     <Layout currentPage={currentPage} onNavigate={setCurrentPage}>
       <>
-        <div className="flex justify-between items-center mb-6">
-
+      <div className="flex flex-row justify-between md:flex-row md:justify-between items-center mb-6 gap-4 text-center">
           <h1 className="text-2xl font-bold">Clientes</h1>
 
           <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -104,10 +103,12 @@ export function ClientesContent() {
               </Button>
             </SheetTrigger>
 
-            <SheetContent>
+            <SheetContent className="max-h-screen overflow-auto p-4">
               <SheetHeader>
-                <SheetTitle>Novo Cliente</SheetTitle>
-                <SheetDescription>Cadastre um novo cliente abaixo.</SheetDescription>
+                <SheetTitle className="text-xl font-semibold">Novo Cliente</SheetTitle>
+                <SheetDescription className="text-sm">
+                  Cadastre um novo cliente abaixo.
+                </SheetDescription>
               </SheetHeader>
 
               <NovoClienteForm
@@ -116,7 +117,6 @@ export function ClientesContent() {
               />
             </SheetContent>
           </Sheet>
-
         </div>
 
         <div className="mb-6">
@@ -131,58 +131,57 @@ export function ClientesContent() {
           </div>
         </div>
 
-        <div className="bg-white border rounded-md p-4">
+        <div className="bg-white border rounded-md p-4 overflow-x-auto">
           <h2 className="text-lg font-semibold mb-2">Lista de Clientes</h2>
           <p className="text-sm text-gray-500 mb-4">Total de {filteredClientes.length} clientes encontrados</p>
 
           {loading ? (
             <div className="py-8 text-center">Carregando clientes...</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-semibold">Nome:</th>
-                    <th className="py-3 px-4 font-semibold flex justify-center">CPF/CNPJ:</th>
+            <table className="w-full min-w-[400px]">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-4 font-semibold">Nome:</th>
+                  <th className="py-3 px-4 font-semibold text-center">CPF/CNPJ:</th>
+                  <th className="py-3 px-4 font-semibold text-right">Ações:</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredClientes.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="py-8 text-center text-gray-500">
+                      Nenhum cliente encontrado
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filteredClientes.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-8 text-center text-gray-500">
-                        Nenhum cliente encontrado
+                ) : (
+                  filteredClientes.map((cliente) => (
+                    <tr key={cliente.id} className="border-b">
+                      <td className="py-3 px-4">{cliente.nome_completo}</td>
+                      <td className="py-3 px-4 text-center">{cliente.cpf_cnpj}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="cursor-pointer bg-amber-200 hover:bg-amber-400 hover:text-black"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="cursor-pointer bg-red-400 hover:bg-primary"
+                            onClick={() => handleDelete(cliente.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
-                  ) : (
-                    filteredClientes.map((cliente) => (
-                      <tr key={cliente.id} className="border-b">
-                        <td className="py-3 px-4">{cliente.nome_completo}</td>
-                        <td className="py-3 px-4 flex justify-center">{cliente.cpf_cnpj}</td>
-                        <td className="py-3 px-4">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="cursor-pointer bg-amber-200 hover:bg-amber-400 hover:text-black"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              className="cursor-pointer bg-red-400 hover:bg-primary"
-                              onClick={() => handleDelete(cliente.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
           )}
         </div>
       </>
