@@ -10,20 +10,30 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Bell, Menu, Plus } from "lucide-react"
+import { Bell, Menu } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import Cookies from "js-cookie"
+import { useRouter } from "next/navigation"
 
 export function Header() {
+  const router = useRouter()
+
+  const handleLogout = () => {
+    Cookies.remove("access_token")
+    Cookies.remove("refresh_token")
+
+    router.push("/users/login")
+  }
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/80 backdrop-blur-md px-4 sm:static lg:h-[60px] lg:px-6 dark:bg-[#0f172a]/95 dark:border-[#334155]/50">
-      {/* Botão do menu para mobile */}
+
       <div className="flex items-center gap-2 md:hidden">
         <Button variant="ghost" size="icon" className="dark:hover:bg-[#1e293b]/70 dark:text-gray-200">
           <Menu className="h-5 w-5" />
         </Button>
       </div>
 
-      {/* Espaço flexível para alinhar ao centro ou deixar tudo à direita no mobile */}
       <div className="flex items-center gap-3 ml-auto">
         <ThemeToggle />
         <Button variant="ghost" size="icon" className="relative dark:hover:bg-[#1e293b]/70 dark:text-gray-200">
@@ -45,7 +55,12 @@ export function Header() {
             <DropdownMenuItem className="dark:text-gray-200 dark:focus:bg-[#1e293b]">Perfil</DropdownMenuItem>
             <DropdownMenuItem className="dark:text-gray-200 dark:focus:bg-[#1e293b]">Configurações</DropdownMenuItem>
             <DropdownMenuSeparator className="dark:bg-[#334155]/50" />
-            <DropdownMenuItem className="dark:text-gray-200 dark:focus:bg-[#1e293b]">Sair</DropdownMenuItem>
+            <DropdownMenuItem
+              className="dark:text-gray-200 dark:focus:bg-[#1e293b]"
+              onClick={handleLogout}
+            >
+              Sair
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
