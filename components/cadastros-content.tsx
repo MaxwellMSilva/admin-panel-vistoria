@@ -385,58 +385,36 @@ export function CadastrosContent() {
         </div>
 
         <div className="mb-3">
-
-          <RadioGroup
-              value={filterType}
-              onValueChange={setFilterType}
-              className="flex items-center gap-6 mb-3 flex-wrap cursor-pointer"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="modelos" id="modelos" />
-                <label htmlFor="modelos" className="text-sm font-medium text-gray-700">
-                  Modelos
-                </label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="cores" id="cores" />
-                <label htmlFor="cores" className="text-sm font-medium text-gray-700">
-                  Cores
-                </label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="fabricantes" id="fabricantes" />
-                <label htmlFor="fabricantes" className="text-sm font-medium text-gray-700">
-                  Fabricantes
-                </label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="status" id="status" />
-                <label htmlFor="status" className="text-sm font-medium text-gray-700">
-                  Status
-                </label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="categorias" id="categorias" />
-                <label htmlFor="categorias" className="text-sm font-medium text-gray-700">
-                  Categorias
-                </label>
-              </div>
-            </RadioGroup>
           
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                className="pl-10 w-full"
-                placeholder="Buscar cadastros..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+          <div className="mb-3">
+            <div className="flex flex-wrap items-end gap-4">
+              <label className="block">
+                <select
+                  name="c_tipo_usuario_id"
+                  className="p-2 border rounded w-48"
+                  required
+                >
+                  <option value="">Selecione um tipo</option>
+                  <option value="1">Modelo</option>
+                  <option value="2">Cor</option>
+                  <option value="3">Fabricante</option>
+                  <option value="4">Status</option>
+                  <option value="5">Categoria</option>
+                </select>
+              </label>
+
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Input
+                  className="pl-10 w-full"
+                  placeholder="Buscar cadastros..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
-          
+          </div>
+
         </div>
 
         <div className="bg-white border rounded-md p-4">
