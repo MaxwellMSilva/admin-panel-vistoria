@@ -393,13 +393,14 @@ export function CadastrosContent() {
                   name="c_tipo_usuario_id"
                   className="p-2 border rounded w-48"
                   required
+                  onChange={(e) => setFilterType(e.target.value)} // Atualiza o filterType
                 >
                   <option value="">Selecione um tipo</option>
-                  <option value="1">Modelo</option>
-                  <option value="2">Cor</option>
-                  <option value="3">Fabricante</option>
-                  <option value="4">Status</option>
-                  <option value="5">Categoria</option>
+                  <option value="modelos">Modelo</option>
+                  <option value="cores">Cor</option>
+                  <option value="fabricantes">Fabricante</option>
+                  <option value="status">Status</option>
+                  <option value="categorias">Categoria</option>
                 </select>
               </label>
 
