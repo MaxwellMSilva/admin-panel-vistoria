@@ -67,6 +67,16 @@
     --input: 216 34% 17%;
     --ring: 0 84% 60%;
   }
+
+  .sheet-overlay {
+  position: relative;
+  z-index: 1000;  /* Ajuste conforme necessário */
+}
+
+button {
+  pointer-events: auto; /* Garantir que o botão pode ser clicado */
+}
+
 }
 
 @layer base {

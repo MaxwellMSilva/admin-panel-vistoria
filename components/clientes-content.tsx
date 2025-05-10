@@ -71,7 +71,7 @@ export function ClientesContent() {
       fetchClientes()
     }
   }, [])
-
+  
   const filteredClientes = Array.isArray(clientes)
     ? clientes.filter(
         (cliente) =>
@@ -195,9 +195,15 @@ export function ClientesContent() {
                             variant="outline"
                             size="icon"
                             className="cursor-pointer bg-amber-200 hover:bg-amber-400 hover:text-black"
+                            onClick={() => {
+                              setSelectedCliente(cliente)
+                              setIsDialogOpen(true)
+                              console.log(cliente)
+                            }}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
+                          
                           <Button
                             variant="destructive"
                             size="icon"

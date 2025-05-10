@@ -3,6 +3,8 @@
 import { Layout } from "@/components/layout"
 
 import { useState, useEffect } from "react"
+import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie'
 
 import { Search, Plus, Trash2, Pencil, Printer, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -74,23 +76,26 @@ export function CadastrosContent() {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false)
   const [isCategoriaDialogOpen, setIsCategoriaDialogOpen] = useState(false)
 
-  const fetchModelos = async (page: number = 1) => {
+  const router = useRouter()
+
+  const fetchModelos = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/v_modelos?page=${page}`, {
-        method: 'GET',
+      setLoading(true)
+      const token = Cookies.get('access_token')
+      if (!token) throw new Error("Token não encontrado")
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_modelos`, {
         headers: {
-          Authorization: 'Bearer <YOUR_TOKEN>', // Substitua pelo seu token
+          Authorization: `Bearer ${token}`,
         },
-      });
-  
-      if (!response.ok) {
-        throw new Error('Erro ao buscar modelos');
-      }
-  
-      const data = await response.json();
-      return data; // Retorne os modelos para uso posterior
+      })
+
+      const data = await response.json()
+      setModelos(Array.isArray(data.data.items) ? data.data.items : [])
     } catch (error) {
       console.error('Erro ao buscar modelos:', error);
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -102,18 +107,19 @@ export function CadastrosContent() {
   const fetchCores = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/cores")
-      if (!response.ok) throw new Error("Falha ao buscar cores")
+      const token = Cookies.get('access_token')
+      if (!token) throw new Error("Token não encontrado")
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_cores`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
 
       const data = await response.json()
-      setCores(data)
+      setCores(Array.isArray(data.data.items) ? data.data.items : [])
     } catch (error) {
-      console.error("Erro ao buscar cores:", error)
-      toast.error("Não foi possível carregar os cores", {
-        duration: 2000,
-      })
-    } finally {
-      setLoading(false)
+      console.error('Erro ao buscar cores:', error);
     }
   }
 
@@ -125,18 +131,19 @@ export function CadastrosContent() {
   const fetchFabricantes = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/fabricantes")
-      if (!response.ok) throw new Error("Falha ao buscar fabricantes")
+      const token = Cookies.get('access_token')
+      if (!token) throw new Error("Token não encontrado")
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_fabricantes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
 
       const data = await response.json()
-      setCores(data)
+      setFabricante(Array.isArray(data.data.items) ? data.data.items : [])
     } catch (error) {
-      console.error("Erro ao buscar fabricantes:", error)
-      toast.error("Não foi possível carregar os fabricantes", {
-        duration: 2000,
-      })
-    } finally {
-      setLoading(false)
+      console.error('Erro ao buscar fabricantes:', error);
     }
   }
 
@@ -145,44 +152,46 @@ export function CadastrosContent() {
     setIsFabricanteDialogOpen(false)
   }
 
-  const fetchStatus = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch("/api/status")
-      if (!response.ok) throw new Error("Falha ao buscar status")
+  // const fetchStatus = async () => {
+  //   try {
+  //     setLoading(true)
+  //     const token = Cookies.get('access_token')
+  //     if (!token) throw new Error("Token não encontrado")
 
-      const data = await response.json()
-      setCores(data)
-    } catch (error) {
-      console.error("Erro ao buscar status:", error)
-      toast.error("Não foi possível carregar os status", {
-        duration: 2000,
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
+  //     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_modelos`, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     })
 
-  const handleNovoStatusSuccess = () => {
-    fetchStatus()
-    setIsStatusDialogOpen(false)
-  }
+  //     const data = await response.json()
+  //     setStatus(Array.isArray(data.data.items) ? data.data.items : [])
+  //   } catch (error) {
+  //     console.error('Erro ao buscar status:', error);
+  //   }
+  // }
+
+  // const handleNovoStatusSuccess = () => {
+  //   fetchStatus()
+  //   setIsStatusDialogOpen(false)
+  // }
 
   const fetchCategorias = async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/categorias")
-      if (!response.ok) throw new Error("Falha ao buscar categorias")
+      const token = Cookies.get('access_token')
+      if (!token) throw new Error("Token não encontrado")
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_categorias`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
 
       const data = await response.json()
-      setCores(data)
+      setCategorias(Array.isArray(data.data.items) ? data.data.items : [])
     } catch (error) {
-      console.error("Erro ao buscar categorias:", error)
-      toast.error("Não foi possível carregar os categorias", {
-        duration: 2000,
-      })
-    } finally {
-      setLoading(false)
+      console.error('Erro ao buscar categorias:', error);
     }
   }
 
@@ -191,54 +200,66 @@ export function CadastrosContent() {
     setIsCategoriaDialogOpen(false)
   }
 
-
-
-
-
-
-
   useEffect(() => {
-    fetchModelos()
-    fetchCores()
-    fetchFabricantes()
-    fetchStatus()
-    fetchCategorias()
+    const token = Cookies.get('access_token')
+    if (!token) {
+      router.push('/users/login')
+    } else {
+      fetchModelos()
+      fetchCores()
+      fetchFabricantes()
+      fetchCategorias()
+    }
   }, [])
 
   const filteredModelos = modelos.filter(
     (modelo) =>
-        modelo.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        modelo.descricao.toLowerCase().includes(searchTerm.toLowerCase()),
+      modelo.id.toString().includes(searchTerm) ||
+      modelo.descricao.includes(searchTerm)
   )
 
   const filteredCores = cores.filter(
     (cor) =>
-      cor.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cor.id.toString().includes(searchTerm) ||
       cor.descricao.toLowerCase().includes(searchTerm.toLowerCase())
   )
-  
+
   const filteredFabricantes = fabricantes.filter(
     (fab) =>
-      fab.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fab.id.toString().includes(searchTerm) ||
       fab.descricao.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const filteredStatus = cores.filter(
-    (cor) =>
-      cor.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cor.descricao.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-  
-  const filteredCategorias = fabricantes.filter(
-    (fab) =>
-      fab.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      fab.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+  // const filteredStatus = status.filter(
+  //   (stat) =>
+  //     stat.id.toString().includes(searchTerm) ||
+  //     stat.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+  // )
+
+  const filteredCategorias = categorias.filter(
+    (cat) =>
+      cat.id.toString().includes(searchTerm) ||
+      cat.descricao.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const [currentPage, setCurrentPage] = useState("modelos")
+  const filteredData = 
+    filterType === "modelos" ? filteredModelos :
+    filterType === "cores" ? filteredCores :
+    filterType === "fabricantes" ? filteredFabricantes :
+    // filterType === "status" ? filteredStatus :
+    filterType === "categorias" ? filteredCategorias : []
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10  // Quantos itens você deseja por página
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage)
+  const currentItems = filteredData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
 
   return (
-    <Layout currentPage={currentPage} onNavigate={setCurrentPage}>
+    <Layout onNavigate={(page: string) => setCurrentPage(Number(page))} currentPage={String(currentPage)}>
       <>
         <div className="flex justify-between items-center mb-3 flex-wrap gap-4">
           <h1 className="text-2xl font-bold">Cadastros</h1>
@@ -329,7 +350,7 @@ export function CadastrosContent() {
                 </Sheet>
               </DropdownMenuItem>
 
-              <DropdownMenuItem asChild>
+              {/* <DropdownMenuItem asChild>
                 <Sheet open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
                   <SheetTrigger asChild>
                     <Button variant="ghost" className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100"
@@ -352,7 +373,7 @@ export function CadastrosContent() {
                     />
                   </SheetContent>
                 </Sheet>
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
 
               <DropdownMenuItem asChild>
                 <Sheet open={isCategoriaDialogOpen} onOpenChange={setIsCategoriaDialogOpen}>
@@ -395,11 +416,10 @@ export function CadastrosContent() {
                   required
                   onChange={(e) => setFilterType(e.target.value)} // Atualiza o filterType
                 >
-                  <option value="">Selecione um tipo</option>
                   <option value="modelos">Modelo</option>
                   <option value="cores">Cor</option>
                   <option value="fabricantes">Fabricante</option>
-                  <option value="status">Status</option>
+                  {/* <option value="status">Status</option> */}
                   <option value="categorias">Categoria</option>
                 </select>
               </label>
@@ -434,20 +454,14 @@ export function CadastrosContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(filterType === "modelos" ? filteredModelos :
-                    filterType === "cores" ? filteredCores :
-                    filterType === "fabricantes" ? filteredFabricantes : []
-                  ).length === 0 ? (
+                  {currentItems.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-gray-500">
                         Nenhum registro encontrado
                       </td>
                     </tr>
                   ) : (
-                    (filterType === "modelos" ? filteredModelos :
-                    filterType === "cores" ? filteredCores :
-                    filterType === "fabricantes" ? filteredFabricantes : []
-                    ).map((item) => (
+                    currentItems.map((item) => (
                       <tr key={item.id} className="border-b">
                         <td className="py-3 px-4">{item.id}</td>
                         <td className="py-3 px-4 flex justify-center">{item.descricao}</td>
@@ -476,6 +490,25 @@ export function CadastrosContent() {
               </table>
             </div>
           )}
+          <div className="pagination">
+            <Button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Anterior
+            </Button>
+
+            <span>
+              Página {currentPage} de {totalPages}
+            </span>
+
+            <Button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Próxima
+            </Button>
+          </div>
         </div>
       </>
     </Layout> 
