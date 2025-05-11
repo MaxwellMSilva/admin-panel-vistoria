@@ -1,132 +1,113 @@
 "use client"
 
-import type React from "react"
-import { useState, useRef, useEffect } from "react"
-
+import { useEffect } from "react"
+import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 type Categoria = {
-    onSuccess: () => void
-    onCancel: () => void
+  onSuccess: () => void
+  onCancel: () => void
+  categoria?: {
+    id: string
+    descricao: string
+  }
 }
 
-export function NovoCategoriaForm({ onSuccess, onCancel }: Categoria) {
-    const [formData, setFormData] = useState({ descricao: "" })
-    const [previewImage, setPreviewImage] = useState<string | null>(null)
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const formRef = useRef<HTMLFormElement>(null) 
+type FormValues = {
+  descricao: string
+}
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target
+export function NovoCategoriaForm({ onSuccess, onCancel, categoria }: Categoria) {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting, errors },
+  } = useForm<FormValues>()
 
-        const formattedValue = value
-        .toUpperCase() // Converte para maiúsculas
-        // .normalize("NFD") // Normaliza caracteres com acentos
-        // .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-        // .replace(/[^A-Z]/g, ""); // Remove tudo que não seja letra
+  const onSubmit = async (data: FormValues) => {
+    const formDataToSend = new FormData()
 
-        setFormData((prev) => ({ ...prev, [name]: formattedValue }))
+    // Campos de texto
+    if (data.descricao) {
+      formDataToSend.append("v_categoria[descricao]", data.descricao.toUpperCase())
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+    try {
+      function getCookie(name: string): string | null {
+        const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"))
+        return match ? decodeURIComponent(match[2]) : null
+      }
 
-        try {
-            setIsSubmitting(true)
+      const token = getCookie("access_token")
 
-            const response = await fetch("/api/categorias", {
-                method: "POST",
-                headers: {
-                "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    descricao: formData.descricao
-                }),
-            })
+      const url = categoria
+        ? `${process.env.NEXT_PUBLIC_API_URL}api/v1/v_categorias/${categoria.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}api/v1/v_categorias`
 
-            if (!response.ok) {
-                let errorMessage = "Falha ao criar categorias"
-                try {
-                const errorData = await response.json()
-                if (errorData && errorData.error) {
-                    errorMessage = errorData.error
-                }
-                } catch (parseError) {
-                console.error("Erro ao processar resposta de erro:", parseError)
-                }
-                throw new Error(errorMessage)
-            }
+      const method = categoria ? "PUT" : "POST"
 
-            toast.success("Categoria criado com sucesso", {
-            duration: 2000
-            })
-            onSuccess()
+      const response = await fetch(url, {
+        method,
+        body: formDataToSend,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
 
-            setFormData({ 
-                descricao: ""
-            })
-        } catch (error: any) {
-        console.error("Erro ao criar categoria:", error)
-        toast.error(error.message || "Não foi possível criar a categoria", {
-            duration: 2000
-        })
-        } finally {
-        setIsSubmitting(false)
-        }
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData?.error || "Falha ao processar categoria")
+      }
+
+      toast.success(categoria ? "Categoria atualizada com sucesso" : "Categoria criada com sucesso", { duration: 2000 })
+      onSuccess()
+      reset()
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao processar categoria", { duration: 2000 })
     }
+  }
 
-    const handleCancel = () => {
-        setFormData({
-            descricao: ""
-        })
-        onCancel()
+  useEffect(() => {
+    if (categoria) {
+      reset({
+        descricao: categoria.descricao,
+      })
     }
+  }, [categoria, reset])
 
-    const handleClickOutside = (e: MouseEvent) => {
-        if (formRef.current && !formRef.current.contains(e.target as Node)) {
-        setFormData({
-            descricao: ""
-        })
-        setPreviewImage(null)
-        }
-    }
-    
-    useEffect(() => {
-        document.addEventListener("mousedown", handleClickOutside)
-        return () => {
-        document.removeEventListener("mousedown", handleClickOutside)
-        }
-    }, [])
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+        <Label htmlFor="descricao" className="text-left font-bold">
+          Descrição:
+        </Label>
+        <Input
+          id="descricao"
+          {...register("descricao", { required: true })}
+          placeholder="Digite a categoria..."
+          className="col-span-3 w-full"
+        />
+      </div>
 
-    return (
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-                <Label htmlFor="descricao" className="text-left font-bold">
-                    Descrição:
-                </Label>
-                <Input
-                    id="descricao"
-                    name="descricao"
-                    placeholder="Digite a categoria..."
-                    value={formData.descricao}
-                    onChange={handleChange}
-                    className="col-span-3 w-full"
-                    required
-                />
-            </div>
-
-
-            <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={handleCancel}>
-                    Cancelar
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Salvando..." : "Salvar"}
-                </Button>
-            </div>
-        </form>
-    )
+      <div className="flex justify-end gap-2 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            reset()
+            onCancel()
+          }}
+        >
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Salvando..." : categoria ? "Atualizar" : "Salvar"}
+        </Button>
+      </div>
+    </form>
+  )
 }
