@@ -54,15 +54,13 @@ export function CadastrosContent() {
   const [isFabricanteDialogOpen, setIsFabricanteDialogOpen] = useState(false)
   const [isCategoriaDialogOpen, setIsCategoriaDialogOpen] = useState(false)
 
-  // Estados para armazenar o item selecionado para edição
   const [selectedModelo, setSelectedModelo] = useState<Modelo | null>(null)
   const [selectedCor, setSelectedCor] = useState<Cor | null>(null)
   const [selectedFabricante, setSelectedFabricante] = useState<Fabricante | null>(null)
   const [selectedCategoria, setSelectedCategoria] = useState<Categoria | null>(null)
 
-  // Estados para paginação
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10 // Valor fixo de 10 itens por página
+  const itemsPerPage = 10
   const [totalPages, setTotalPages] = useState(1)
 
   const router = useRouter()
@@ -82,7 +80,6 @@ export function CadastrosContent() {
       const data = await response.json()
       setModelos(Array.isArray(data.data.items) ? data.data.items : [])
 
-      // Atualizar o total de páginas se a API fornecer essa informação
       if (data.data.total_pages) {
         setTotalPages(data.data.total_pages)
       }
@@ -207,7 +204,6 @@ export function CadastrosContent() {
 
       if (!response.ok) throw new Error(`Falha ao excluir ${entityName}`)
 
-      // Refaz a busca após exclusão
       switch (endpoint) {
         case "v_modelos":
           await fetchModelos()
@@ -236,7 +232,6 @@ export function CadastrosContent() {
     }
   }
 
-  // Função para lidar com a edição de um item
   const handleEdit = (item: any, type: string) => {
     switch (type) {
       case "modelos":
@@ -258,7 +253,6 @@ export function CadastrosContent() {
     }
   }
 
-  // Limpar o item selecionado quando o diálogo for fechado
   useEffect(() => {
     if (!isModeloDialogOpen) setSelectedModelo(null)
     if (!isCorDialogOpen) setSelectedCor(null)
@@ -266,7 +260,6 @@ export function CadastrosContent() {
     if (!isCategoriaDialogOpen) setSelectedCategoria(null)
   }, [isModeloDialogOpen, isCorDialogOpen, isFabricanteDialogOpen, isCategoriaDialogOpen])
 
-  // Função para abrir o diálogo de novo cadastro e garantir que não há item selecionado
   const handleNovoClick = (type: string) => {
     switch (type) {
       case "modelo":
@@ -300,7 +293,6 @@ export function CadastrosContent() {
     }
   }, [])
 
-  // Reset para a primeira página quando mudar o tipo de filtro ou o termo de busca
   useEffect(() => {
     setCurrentPage(1)
 
@@ -348,12 +340,6 @@ export function CadastrosContent() {
             ? filteredCategorias
             : []
 
-  // Remover estas linhas
-  // const totalItems = filteredData.length
-  // const totalPages = Math.ceil(totalItems / itemsPerPage)
-  // const currentItems = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-
-  // E use diretamente os dados retornados da API
   const currentItems =
     filterType === "modelos"
       ? modelos
@@ -376,14 +362,11 @@ export function CadastrosContent() {
             ? filteredCategorias.length
             : 0
 
-  // Função para obter o endpoint correto com base no tipo de filtro
   const getEndpoint = (type: string) => {
     return `v_${type}`
   }
 
-  // Função para obter o label correto com base no tipo de filtro
   const getLabel = (type: string) => {
-    // Remove o 's' final para obter o singular
     return type.slice(0, -1)
   }
 
@@ -391,7 +374,6 @@ export function CadastrosContent() {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
 
-      // Buscar dados da página selecionada
       switch (filterType) {
         case "modelos":
           fetchModelos(page)
@@ -409,10 +391,8 @@ export function CadastrosContent() {
     }
   }
 
-  // Adicione este useEffect dentro do componente, antes do return
   useEffect(() => {
     console.log(`Página atual: ${currentPage}, Itens por página: ${itemsPerPage}, Total de páginas: ${totalPages}`)
-    // Este useEffect é apenas para debug
   }, [currentPage, itemsPerPage, totalPages])
 
   return (

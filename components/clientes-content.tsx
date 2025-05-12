@@ -27,7 +27,6 @@ export function ClientesContent() {
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
   const [loadingDelete, setLoadingDelete] = useState(false)
 
-  // Estados para paginação
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
@@ -51,9 +50,7 @@ export function ClientesContent() {
       setClientes(Array.isArray(data.data.items) ? data.data.items : [])
     } catch (error) {
       console.error("Erro ao buscar clientes:", error)
-      toast.error("Não foi possível carregar os clientes", {
-        duration: 2000,
-      })
+      toast.error("Não foi possível carregar os clientes", { duration: 2000 })
     } finally {
       setLoading(false)
     }
@@ -100,7 +97,6 @@ export function ClientesContent() {
     }
   }, [])
 
-  // Reset para a primeira página quando mudar o termo de busca
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm])
@@ -131,7 +127,6 @@ export function ClientesContent() {
     }
   }, [isDialogOpen])
 
-  // Função para navegar para uma página específica
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
@@ -197,22 +192,6 @@ export function ClientesContent() {
               <p className="text-sm text-gray-500">
                 {totalItems} {totalItems === 1 ? "cliente encontrado" : "clientes encontrados"}
               </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-500">Itens por página:</label>
-              <select
-                className="p-1 border rounded text-sm"
-                value={itemsPerPage}
-                onChange={(e) => {
-                  setItemsPerPage(Number(e.target.value))
-                  setCurrentPage(1)
-                }}
-              >
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-              </select>
             </div>
           </div>
 

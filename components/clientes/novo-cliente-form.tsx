@@ -61,7 +61,6 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
   const [carregandoCidades, setCarregandoCidades] = useState(false)
   const [cidadeAberta, setCidadeAberta] = useState(false)
 
-  // Função para buscar cidades com base no termo de pesquisa
   const buscarCidades = async (termo: string) => {
     if (!termo || termo.length < 3) return
 
@@ -80,7 +79,6 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
 
       const data = await response.json()
 
-      // Filtra as cidades pelo termo de pesquisa
       const cidadesFiltradas = Array.isArray(data.data.items)
         ? data.data.items.filter((cidade: Cidade) => cidade.descricao.toLowerCase().includes(termo.toLowerCase()))
         : []
@@ -94,7 +92,6 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
     }
   }
 
-  // Buscar cidade pelo ID quando o formulário é carregado para edição
   const buscarCidadePorId = async (id: string | number) => {
     try {
       const token = Cookies.get("access_token")
@@ -109,7 +106,7 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
       if (!response.ok) return null
 
       const data = await response.json()
-      // Verifica se os dados estão na estrutura esperada
+
       if (data && data.data) {
         return data.data
       }
@@ -120,7 +117,6 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
     }
   }
 
-  // Efeito para buscar cidades quando o termo de pesquisa muda
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (termoPesquisaCidade) {
@@ -131,7 +127,6 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
     return () => clearTimeout(timeoutId)
   }, [termoPesquisaCidade])
 
-  // Efeito para carregar os dados do cliente quando estiver editando
   useEffect(() => {
     if (cliente) {
       reset({
@@ -175,14 +170,12 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
   const onSubmit = async (data: FormValues) => {
     const formDataToSend = new FormData()
 
-    // Campos de texto
     Object.entries(data).forEach(([key, value]) => {
       if (key.startsWith("anexo_") === false && typeof value === "string") {
         formDataToSend.append(`c_cliente[${key}]`, value.toUpperCase())
       }
     })
 
-    // Arquivos
     if (data.anexo_cpf?.[0]) {
       formDataToSend.append("c_cliente[anexo_cpf]", data.anexo_cpf[0])
     }
@@ -224,7 +217,6 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
     }
   }
 
-  // Função para carregar todas as cidades (alternativa se a busca por ID não funcionar)
   const carregarTodasCidades = async () => {
     try {
       const token = Cookies.get("access_token")
@@ -241,7 +233,6 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
       const data = await response.json()
       const todasCidades = Array.isArray(data.data.items) ? data.data.items : []
 
-      // Se estiver editando um cliente, encontre a cidade pelo ID
       if (cliente && cliente.g_cidade_id && todasCidades.length > 0) {
         const cidadeDoCliente = todasCidades.find((c: Cidade) => c.id.toString() === cliente.g_cidade_id.toString())
         if (cidadeDoCliente) {
@@ -256,7 +247,6 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
     }
   }
 
-  // Carregar todas as cidades quando o componente for montado
   useEffect(() => {
     const inicializarCidades = async () => {
       const todasCidades = await carregarTodasCidades()
@@ -390,62 +380,64 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
           control={control}
           rules={{ required: true }}
           render={({ field }) => (
-            <Popover open={cidadeAberta} onOpenChange={setCidadeAberta}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={cidadeAberta}
-                  className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
-                  onClick={() => console.log("Cidade selecionada:", cidadeSelecionada)}
-                >
-                  {cidadeSelecionada
-                    ? `${cidadeSelecionada.descricao || ""} ${cidadeSelecionada.g_estado?.uf_descricao ? `- ${cidadeSelecionada.g_estado.uf_descricao}` : ""}`
-                    : "Selecione uma cidade"}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0">
-                <Command>
-                  <CommandInput
-                    placeholder="Buscar cidade..."
-                    value={termoPesquisaCidade}
-                    onValueChange={setTermoPesquisaCidade}
-                  />
-                  {carregandoCidades && (
-                    <div className="flex items-center justify-center p-4">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="ml-2">Carregando cidades...</span>
-                    </div>
-                  )}
-                  <CommandEmpty>
-                    {termoPesquisaCidade.length < 3
-                      ? "Digite pelo menos 3 caracteres para buscar"
-                      : "Nenhuma cidade encontrada"}
-                  </CommandEmpty>
-                  <CommandList>
-                    <CommandGroup>
-                      {cidades.map((cidade) => (
-                        <CommandItem
-                          key={cidade.id}
-                          value={cidade.descricao}
-                          onSelect={() => {
-                            setValue("g_cidade_id", cidade.id)
-                            setCidadeSelecionada(cidade)
-                            setCidadeAberta(false)
-                          }}
-                        >
-                          <Check
-                            className={cn("mr-2 h-4 w-4", field.value === cidade.id ? "opacity-100" : "opacity-0")}
-                          />
-                          {cidade.descricao} - {cidade.g_estado?.uf_descricao || ""}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <div className="relative z-10">
+              <Popover open={cidadeAberta} onOpenChange={setCidadeAberta}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={cidadeAberta}
+                    className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                    onClick={() => console.log("Cidade selecionada:", cidadeSelecionada)}
+                  >
+                    {cidadeSelecionada
+                      ? `${cidadeSelecionada.descricao || ""} ${cidadeSelecionada.g_estado?.uf_descricao ? `- ${cidadeSelecionada.g_estado.uf_descricao}` : ""}`
+                      : "Selecione uma cidade"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0 z-[9999]">
+                  <Command>
+                    <CommandInput
+                      placeholder="Buscar cidade..."
+                      value={termoPesquisaCidade}
+                      onValueChange={setTermoPesquisaCidade}
+                    />
+                    {carregandoCidades && (
+                      <div className="flex items-center justify-center p-4">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="ml-2">Carregando cidades...</span>
+                      </div>
+                    )}
+                    <CommandEmpty>
+                      {termoPesquisaCidade.length < 3
+                        ? "Digite pelo menos 3 caracteres para buscar"
+                        : "Nenhuma cidade encontrada"}
+                    </CommandEmpty>
+                    <CommandList>
+                      <CommandGroup>
+                        {cidades.map((cidade) => (
+                          <CommandItem
+                            key={cidade.id}
+                            value={cidade.descricao}
+                            onSelect={() => {
+                              setValue("g_cidade_id", cidade.id)
+                              setCidadeSelecionada(cidade)
+                              setCidadeAberta(false)
+                            }}
+                          >
+                            <Check
+                              className={cn("mr-2 h-4 w-4", field.value === cidade.id ? "opacity-100" : "opacity-0")}
+                            />
+                            {cidade.descricao} - {cidade.g_estado?.uf_descricao || ""}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
           )}
         />
         {errors.g_cidade_id && <span className="text-sm text-red-500">Cidade é obrigatória</span>}

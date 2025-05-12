@@ -31,7 +31,6 @@ export function VeiculosContent() {
   const [selectedVeiculo, setSelectedVeiculo] = useState<Veiculo | null>(null)
   const [loadingDelete, setLoadingDelete] = useState(false)
 
-  // Estados para paginação
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
@@ -104,7 +103,6 @@ export function VeiculosContent() {
     }
   }, [])
 
-  // Reset para a primeira página quando mudar o termo de busca
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm])
@@ -135,7 +133,6 @@ export function VeiculosContent() {
     }
   }, [isDialogOpen])
 
-  // Função para navegar para uma página específica
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
@@ -202,24 +199,7 @@ export function VeiculosContent() {
                 {totalItems} {totalItems === 1 ? "veículo encontrado" : "veículos encontrados"}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-500">Itens por página:</label>
-              <select
-                className="p-1 border rounded text-sm"
-                value={itemsPerPage}
-                onChange={(e) => {
-                  setItemsPerPage(Number(e.target.value))
-                  setCurrentPage(1)
-                }}
-              >
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-              </select>
-            </div>
           </div>
-
           {loading ? (
             <div className="py-12 flex justify-center items-center">
               <div className="flex flex-col items-center gap-2">
