@@ -6,34 +6,35 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 
-import { Search, Trash2, Pencil, Loader, UserPlus, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react'
+import { Search, Trash2, Pencil, Loader, BadgeCheck, ChevronLeft, ChevronRight, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { NovoUsuarioForm } from "./usuarios/page"
+import { NovoCargoForm } from "./cargos/page"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
-type Usuario = {
+type Cargo = {
   id: string
   nome: string
-  email: string
-  cargo: string
+  descricao: string
+  nivel: number
   ativo: boolean
+  permissoes?: string[]
 }
 
-// Vamos atualizar o componente UsuariosContent para ficar mais parecido com a tela de clientes
+// Vamos atualizar o componente CargosContent para ficar mais parecido com a tela de clientes
 
 // Mantenha os imports existentes
 
-// Atualize a função UsuariosContent para o seguinte formato:
-export function UsuariosContent() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([])
+// Atualize a função CargosContent para o seguinte formato:
+export function CargosContent() {
+  const [cargos, setCargos] = useState<Cargo[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null)
+  const [selectedCargo, setSelectedCargo] = useState<Cargo | null>(null)
   const [loadingDelete, setLoadingDelete] = useState(false)
   const [loadingPagination, setLoadingPagination] = useState(false)
 
@@ -116,26 +117,26 @@ export function UsuariosContent() {
     return false
   }
 
-  const fetchUsuarios = async (page = 1) => {
+  const fetchCargos = async (page = 1) => {
     try {
       setLoading(true)
       setLoadingPagination(true)
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/usuarios?page=${page}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/cargos?page=${page}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
 
-      if (!response.ok) throw new Error("Falha ao buscar usuários")
+      if (!response.ok) throw new Error("Falha ao buscar cargos")
 
       const data = await response.json()
-      console.log("Usuários API Response:", data)
+      console.log("Cargos API Response:", data)
 
       const items = Array.isArray(data.data.items) ? data.data.items : []
-      setUsuarios(items)
+      setCargos(items)
 
       const { totalPages: pages, totalItems: items_count } = extractPaginationInfo(data)
       setTotalPages(pages)
@@ -144,21 +145,40 @@ export function UsuariosContent() {
       // Verificar se a página está vazia e voltar para a anterior se necessário
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
-      console.error("Erro ao buscar usuários:", error)
-      toast.error("Não foi possível carregar os usuários", { duration: 2000 })
-      
+      console.error("Erro ao buscar cargos:", error)
+      toast.error("Não foi possível carregar os cargos", { duration: 2000 })
+
       // Se a API ainda não estiver implementada, usar dados simulados
-      const mockUsuarios = [
-        { id: "1", nome: "Admin", email: "admin@sistema.com", cargo_id: "1", cargo: "Administrador", status: "Ativo" },
-        { id: "2", nome: "João Silva", email: "joao@sistema.com", cargo_id: "2", cargo: "Operador", status: "Ativo" },
-        { id: "3", nome: "Maria Santos", email: "maria@sistema.com", cargo_id: "3", cargo: "Gerente", status: "Ativo" },
-        { id: "4", nome: "Pedro Oliveira", email: "pedro@sistema.com", cargo_id: "2", cargo: "Operador", status: "Inativo" },
-        { id: "5", nome: "Ana Costa", email: "ana@sistema.com", cargo_id: "4", cargo: "Atendente", status: "Ativo" },
+      const mockCargos = [
+        {
+          id: "1",
+          nome: "Administrador",
+          descricao: "Acesso total ao sistema",
+          permissoes: ["dashboard", "cadastros", "clientes", "veiculos", "usuarios", "cargos"],
+        },
+        {
+          id: "2",
+          nome: "Gerente",
+          descricao: "Acesso a gestão de clientes e veículos",
+          permissoes: ["dashboard", "clientes", "veiculos"],
+        },
+        {
+          id: "3",
+          nome: "Operador",
+          descricao: "Acesso a cadastros básicos",
+          permissoes: ["dashboard", "cadastros"],
+        },
+        {
+          id: "4",
+          nome: "Atendente",
+          descricao: "Acesso a clientes",
+          permissoes: ["dashboard", "clientes"],
+        },
       ]
-      setUsuarios(mockUsuarios)
+      setCargos(mockCargos)
       setTotalPages(1)
-      setTotalItems(mockUsuarios.length)
-      
+      setTotalItems(mockCargos.length)
+
       return false
     } finally {
       setLoading(false)
@@ -167,7 +187,7 @@ export function UsuariosContent() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este usuário?")) return
+    if (!confirm("Tem certeza que deseja excluir este cargo?")) return
 
     setLoadingDelete(true)
 
@@ -175,33 +195,33 @@ export function UsuariosContent() {
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/usuarios/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/cargos/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
 
-      if (!response.ok) throw new Error("Falha ao excluir usuário")
+      if (!response.ok) throw new Error("Falha ao excluir cargo")
 
       // Após excluir, recarregar os dados da página atual
-      const pageChanged = await fetchUsuarios(currentPage)
+      const pageChanged = await fetchCargos(currentPage)
 
       // Se a página não mudou (não estava vazia), mostrar mensagem de sucesso
       if (!pageChanged) {
-        toast.success("Usuário excluído com sucesso", {
+        toast.success("Cargo excluído com sucesso", {
           duration: 2000,
         })
       }
     } catch (error) {
-      console.error("Erro ao excluir usuário:", error)
-      toast.error("Não foi possível excluir o usuário", {
+      console.error("Erro ao excluir cargo:", error)
+      toast.error("Não foi possível excluir o cargo", {
         duration: 2000,
       })
-      
+
       // Se a API ainda não estiver implementada, remover localmente
-      setUsuarios(prev => prev.filter(usuario => usuario.id !== id))
-      toast.success("Usuário excluído com sucesso", { duration: 2000 })
+      setCargos((prev) => prev.filter((cargo) => cargo.id !== id))
+      toast.success("Cargo excluído com sucesso", { duration: 2000 })
     } finally {
       setLoadingDelete(false)
     }
@@ -212,36 +232,35 @@ export function UsuariosContent() {
     if (!token) {
       router.push("/users/login")
     } else {
-      fetchUsuarios(1)
+      fetchCargos(1)
     }
   }, [])
 
   useEffect(() => {
     setCurrentPage(1)
-    fetchUsuarios(1)
+    fetchCargos(1)
   }, [searchTerm])
 
-  const filteredUsuarios = usuarios.filter(
-    (usuario) =>
-      usuario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.cargo?.toLowerCase().includes(searchTerm.toLowerCase()),
+  const filteredCargos = cargos.filter(
+    (cargo) =>
+      cargo.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cargo.descricao.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   // Use this for displaying the count:
-  const displayedItemsCount = filteredUsuarios.length
+  const displayedItemsCount = filteredCargos.length
 
-  const handleNovoUsuarioSuccess = () => {
-    fetchUsuarios(currentPage)
+  const handleNovoCargoSuccess = () => {
+    fetchCargos(currentPage)
     setIsDialogOpen(false)
-    setSelectedUsuario(null)
+    setSelectedCargo(null)
   }
 
-  const [currentPageNav, setCurrentPageNav] = useState("usuarios")
+  const [currentPageNav, setCurrentPageNav] = useState("cargos")
 
   useEffect(() => {
     if (!isDialogOpen) {
-      setSelectedUsuario(null)
+      setSelectedCargo(null)
     }
   }, [isDialogOpen])
 
@@ -251,7 +270,7 @@ export function UsuariosContent() {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
       setLoadingPagination(true)
-      fetchUsuarios(page)
+      fetchCargos(page)
     }
   }
 
@@ -310,41 +329,51 @@ export function UsuariosContent() {
     setSearchTerm("")
   }
 
+  // Lista de permissões disponíveis
+  const permissoesDisponiveis = [
+    { id: "dashboard", label: "Dashboard" },
+    { id: "cadastros", label: "Cadastros" },
+    { id: "clientes", label: "Clientes" },
+    { id: "veiculos", label: "Veículos" },
+    { id: "usuarios", label: "Usuários" },
+    { id: "cargos", label: "Cargos" },
+  ]
+
   return (
     <Layout currentPage={currentPageNav} onNavigate={setCurrentPageNav}>
       <div className="space-y-6">
-        {/* Cabeçalho com título e botão de novo usuário */}
+        {/* Cabeçalho com título e botão de novo cargo */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Usuários</h1>
-            <p className="text-sm text-gray-500 mt-1">Gerencie os usuários do sistema</p>
+            <h1 className="text-2xl font-bold text-gray-800">Cargos</h1>
+            <p className="text-sm text-gray-500 mt-1">Gerencie os cargos e permissões do sistema</p>
           </div>
 
           <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <SheetTrigger asChild>
               <Button className="bg-red-500 hover:bg-red-600 text-white font-medium rounded-md flex items-center gap-2 transition-colors w-full sm:w-auto">
-                <UserPlus size={16} />
-                <span>Novo Usuário</span>
+                <BadgeCheck size={16} />
+                <span>Novo Cargo</span>
               </Button>
             </SheetTrigger>
 
             <SheetContent className="max-h-screen overflow-auto p-4 sm:max-w-md">
               <SheetHeader>
                 <SheetTitle className="text-xl font-semibold">
-                  {selectedUsuario ? "Editar Usuário" : "Novo Usuário"}
+                  {selectedCargo ? "Editar Cargo" : "Novo Cargo"}
                 </SheetTitle>
                 <SheetDescription className="text-sm">
-                  {selectedUsuario ? "Edite os dados do usuário abaixo." : "Cadastre um novo usuário abaixo."}
+                  {selectedCargo ? "Edite os dados do cargo abaixo." : "Cadastre um novo cargo abaixo."}
                 </SheetDescription>
               </SheetHeader>
 
-              <NovoUsuarioForm
-                onSuccess={handleNovoUsuarioSuccess}
+              <NovoCargoForm
+                onSuccess={handleNovoCargoSuccess}
                 onCancel={() => {
                   setIsDialogOpen(false)
-                  setSelectedUsuario(null)
+                  setSelectedCargo(null)
                 }}
-                usuario={selectedUsuario}
+                cargo={selectedCargo}
               />
             </SheetContent>
           </Sheet>
@@ -363,12 +392,12 @@ export function UsuariosContent() {
           <CardContent className="p-4">
             <div className="flex flex-col space-y-4">
               <div className="w-full">
-                <label className="block text-sm font-medium mb-1">Buscar Usuários</label>
+                <label className="block text-sm font-medium mb-1">Buscar Cargos</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   <Input
                     className="pl-10 w-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-                    placeholder="Buscar por nome, email ou cargo..."
+                    placeholder="Buscar por nome ou descrição..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -391,9 +420,9 @@ export function UsuariosContent() {
           <CardHeader className="p-4 pb-2">
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle className="text-lg font-semibold">Lista de Usuários</CardTitle>
+                <CardTitle className="text-lg font-semibold">Lista de Cargos</CardTitle>
                 <p className="text-sm text-gray-500 mt-1">
-                  {displayedItemsCount} {displayedItemsCount === 1 ? "usuário encontrado" : "usuários encontrados"}
+                  {displayedItemsCount} {displayedItemsCount === 1 ? "cargo encontrado" : "cargos encontrados"}
                   {totalItems > 0 && ` de ${totalItems} total`}
                 </p>
               </div>
@@ -474,40 +503,41 @@ export function UsuariosContent() {
                   <div className="relative w-16 h-16">
                     <div className="absolute inset-0 rounded-full border-4 border-t-red-500 border-r-red-300 border-b-red-200 border-l-red-100 animate-spin"></div>
                   </div>
-                  <p className="text-gray-500 mt-4 font-medium">Carregando usuários...</p>
+                  <p className="text-gray-500 mt-4 font-medium">Carregando cargos...</p>
                 </div>
               </div>
             ) : (
               <>
                 {/* Mobile card view */}
                 <div className="sm:hidden space-y-3">
-                  {filteredUsuarios.length === 0 ? (
+                  {filteredCargos.length === 0 ? (
                     <div className="py-12 text-center text-gray-500">
                       <div className="flex flex-col items-center gap-2">
-                        <p className="text-lg">Nenhum usuário encontrado</p>
-                        <p className="text-sm text-gray-400">Tente ajustar os filtros ou adicione um novo usuário</p>
+                        <p className="text-lg">Nenhum cargo encontrado</p>
+                        <p className="text-sm text-gray-400">Tente ajustar os filtros ou adicione um novo cargo</p>
                       </div>
                     </div>
                   ) : (
-                    filteredUsuarios.map((usuario) => (
-                      <div key={usuario.id} className="bg-white border rounded-lg p-4 shadow-sm">
+                    filteredCargos.map((cargo) => (
+                      <div key={cargo.id} className="bg-white border rounded-lg p-4 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <h3 className="font-medium text-lg">{usuario.nome}</h3>
-                            <p className="text-sm text-gray-500">{usuario.email}</p>
-                            <div className="flex gap-2 mt-2">
-                              <Badge variant="outline" className="bg-gray-50">
-                                {usuario.cargo}
-                              </Badge>
-                              <Badge
-                                className={
-                                  usuario.status === "Ativo"
-                                    ? "bg-green-100 text-green-800 border-green-200"
-                                    : "bg-gray-100 text-gray-800 border-gray-200"
-                                }
-                              >
-                                {usuario.status}
-                              </Badge>
+                            <h3 className="font-medium text-lg">{cargo.nome}</h3>
+                            <p className="text-sm text-gray-500 mb-2">{cargo.descricao}</p>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {cargo.permissoes &&
+                                cargo.permissoes.map((permissao) => {
+                                  const permissaoInfo = permissoesDisponiveis.find((p) => p.id === permissao)
+                                  return (
+                                    <Badge
+                                      key={permissao}
+                                      variant="outline"
+                                      className="bg-blue-50 text-blue-700 border-blue-200"
+                                    >
+                                      {permissaoInfo?.label || permissao}
+                                    </Badge>
+                                  )
+                                })}
                             </div>
                           </div>
                           <div className="flex gap-1">
@@ -515,7 +545,7 @@ export function UsuariosContent() {
                               variant="ghost"
                               size="icon"
                               onClick={() => {
-                                setSelectedUsuario(usuario)
+                                setSelectedCargo(cargo)
                                 setIsDialogOpen(true)
                               }}
                               className="hover:bg-blue-50 transition-colors h-8 w-8"
@@ -525,7 +555,7 @@ export function UsuariosContent() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDelete(usuario.id)}
+                              onClick={() => handleDelete(cargo.id)}
                               disabled={loadingDelete}
                               className="hover:bg-red-50 transition-colors h-8 w-8"
                             >
@@ -548,44 +578,44 @@ export function UsuariosContent() {
                     <thead>
                       <tr className="bg-gray-50">
                         <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Nome</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Email</th>
-                        <th className="py-3 px-4 font-semibold text-gray-700 border-b text-center">Cargo</th>
-                        <th className="py-3 px-4 font-semibold text-gray-700 border-b text-center">Status</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Descrição</th>
+                        <th className="py-3 px-4 font-semibold text-gray-700 border-b">Permissões</th>
                         <th className="py-3 px-4 font-semibold text-gray-700 border-b text-right">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredUsuarios.length === 0 ? (
+                      {filteredCargos.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="py-12 text-center text-gray-500">
+                          <td colSpan={4} className="py-12 text-center text-gray-500">
                             <div className="flex flex-col items-center gap-2">
-                              <p className="text-lg">Nenhum usuário encontrado</p>
+                              <p className="text-lg">Nenhum cargo encontrado</p>
                               <p className="text-sm text-gray-400">
-                                Tente ajustar os filtros ou adicione um novo usuário
+                                Tente ajustar os filtros ou adicione um novo cargo
                               </p>
                             </div>
                           </td>
                         </tr>
                       ) : (
-                        filteredUsuarios.map((usuario) => (
-                          <tr key={usuario.id} className="border-b hover:bg-gray-50 transition-colors">
-                            <td className="py-3 px-4 text-gray-700">{usuario.nome}</td>
-                            <td className="py-3 px-4 text-gray-700">{usuario.email}</td>
-                            <td className="py-3 px-4 text-center">
-                              <Badge variant="outline" className="bg-gray-50">
-                                {usuario.cargo}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              <Badge
-                                className={
-                                  usuario.status === "Ativo"
-                                    ? "bg-green-100 text-green-800 border-green-200"
-                                    : "bg-gray-100 text-gray-800 border-gray-200"
-                                }
-                              >
-                                {usuario.status}
-                              </Badge>
+                        filteredCargos.map((cargo) => (
+                          <tr key={cargo.id} className="border-b hover:bg-gray-50 transition-colors">
+                            <td className="py-3 px-4 text-gray-700">{cargo.nome}</td>
+                            <td className="py-3 px-4 text-gray-700">{cargo.descricao}</td>
+                            <td className="py-3 px-4">
+                              <div className="flex flex-wrap gap-1">
+                                {cargo.permissoes &&
+                                  cargo.permissoes.map((permissao) => {
+                                    const permissaoInfo = permissoesDisponiveis.find((p) => p.id === permissao)
+                                    return (
+                                      <Badge
+                                        key={permissao}
+                                        variant="outline"
+                                        className="bg-blue-50 text-blue-700 border-blue-200"
+                                      >
+                                        {permissaoInfo?.label || permissao}
+                                      </Badge>
+                                    )
+                                  })}
+                              </div>
                             </td>
                             <td className="py-3 px-4">
                               <div className="flex justify-end gap-2">
@@ -593,7 +623,7 @@ export function UsuariosContent() {
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => {
-                                    setSelectedUsuario(usuario)
+                                    setSelectedCargo(cargo)
                                     setIsDialogOpen(true)
                                   }}
                                   className="hover:bg-blue-50 transition-colors"
@@ -603,7 +633,7 @@ export function UsuariosContent() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleDelete(usuario.id)}
+                                  onClick={() => handleDelete(cargo.id)}
                                   disabled={loadingDelete}
                                   className="hover:bg-red-50 transition-colors"
                                 >
