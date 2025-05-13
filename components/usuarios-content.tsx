@@ -6,31 +6,34 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 
-import { Search, Trash2, Pencil, Loader, Car, ChevronLeft, ChevronRight, Filter, X } from "lucide-react"
+import { Search, Trash2, Pencil, Loader, UserPlus, ChevronLeft, ChevronRight, Filter, X, Shield } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { NovoVeiculoForm } from "./veiculos/novo-veiculos-form"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
-type Veiculo = {
+type Usuario = {
   id: string
-  placa: string
-  descricao: string
-  v_modelo_id: string
-  v_cor_id: string
-  v_fabricante_id: string
-  c_cliente_id: string
+  nome: string
+  email: string
+  cargo: string
+  status: string
 }
 
-export function VeiculosContent() {
-  const [veiculos, setVeiculos] = useState<Veiculo[]>([])
-  const [loading, setLoading] = useState(true)
+export function UsuariosContent() {
+  const [usuarios, setUsuarios] = useState<Usuario[]>([
+    { id: "1", nome: "Admin", email: "admin@sistema.com", cargo: "Administrador", status: "Ativo" },
+    { id: "2", nome: "João Silva", email: "joao@sistema.com", cargo: "Operador", status: "Ativo" },
+    { id: "3", nome: "Maria Santos", email: "maria@sistema.com", cargo: "Gerente", status: "Ativo" },
+    { id: "4", nome: "Pedro Oliveira", email: "pedro@sistema.com", cargo: "Operador", status: "Inativo" },
+    { id: "5", nome: "Ana Costa", email: "ana@sistema.com", cargo: "Atendente", status: "Ativo" },
+  ])
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedVeiculo, setSelectedVeiculo] = useState<Veiculo | null>(null)
+  const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null)
   const [loadingDelete, setLoadingDelete] = useState(false)
   const [loadingPagination, setLoadingPagination] = useState(false)
 
@@ -40,67 +43,6 @@ export function VeiculosContent() {
   const [totalItems, setTotalItems] = useState(0)
 
   const router = useRouter()
-
-  // Helper function to extract pagination info from API response
-  const extractPaginationInfo = (data: any) => {
-    console.log("API Response Data:", data)
-
-    // Try different possible structures for pagination info
-    let pages = 1
-    let total = 0
-
-    if (data && data.data) {
-      // Check for total_pages in data.data
-      if (typeof data.data.total_pages === "number") {
-        pages = data.data.total_pages
-        console.log("Found total_pages in data.data:", pages)
-      }
-
-      // Check for meta.total_pages
-      if (data.data.meta && typeof data.data.meta.total_pages === "number") {
-        pages = data.data.meta.total_pages
-        console.log("Found total_pages in data.data.meta:", pages)
-      }
-
-      // Check for pagination.total_pages
-      if (data.data.pagination && typeof data.data.pagination.total_pages === "number") {
-        pages = data.data.pagination.total_pages
-        console.log("Found total_pages in data.data.pagination:", pages)
-      }
-
-      // Check for total_items/count
-      if (typeof data.data.total_items === "number") {
-        total = data.data.total_items
-        console.log("Found total_items:", total)
-      } else if (typeof data.data.count === "number") {
-        total = data.data.count
-        console.log("Found count:", total)
-      } else if (data.data.meta && typeof data.data.meta.total_items === "number") {
-        total = data.data.meta.total_items
-        console.log("Found total_items in meta:", total)
-      }
-
-      // If we have total items but no pages, calculate pages
-      if (total > 0 && pages === 1) {
-        pages = Math.ceil(total / itemsPerPage)
-        console.log("Calculated pages from total items:", pages)
-      }
-
-      // Fallback: if we have items array, use its length to estimate
-      if (pages === 1 && Array.isArray(data.data.items) && data.data.items.length > 0) {
-        // If items.length is exactly itemsPerPage, assume there might be more pages
-        if (data.data.items.length === itemsPerPage) {
-          pages = 2 // At least 2 pages
-          console.log("Estimated at least 2 pages based on items length")
-        }
-      }
-    }
-
-    // Ensure we have at least 1 page
-    pages = Math.max(1, pages)
-
-    return { totalPages: pages, totalItems: total }
-  }
 
   // Função para verificar se a página atual está vazia e voltar para a anterior se necessário
   const checkEmptyPageAndGoBack = (items: any[], currentPageValue: number) => {
@@ -113,37 +55,29 @@ export function VeiculosContent() {
     return false
   }
 
-  const fetchVeiculos = async (page = 1) => {
+  const fetchUsuarios = async (page = 1) => {
     try {
+      setLoading(true)
       setLoadingPagination(true)
-      const token = Cookies.get("access_token")
-      if (!token) throw new Error("Token não encontrado")
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_veiculos?page=${page}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (!response.ok) throw new Error("Falha ao buscar veículos")
-
-      const data = await response.json()
-      console.log("Veículos API Response:", data)
-
-      const items = Array.isArray(data.data.items) ? data.data.items : []
-      setVeiculos(items)
-
-      const { totalPages: pages, totalItems: items_count } = extractPaginationInfo(data)
-      setTotalPages(pages)
-      setTotalItems(items_count || items.length)
-
+      
+      // Simulando uma chamada de API
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      // Calculando a paginação com os dados simulados
+      const startIndex = (page - 1) * itemsPerPage
+      const endIndex = startIndex + itemsPerPage
+      const paginatedItems = usuarios.slice(startIndex, endIndex)
+      
+      // Calculando o total de páginas
+      const totalPagesCount = Math.ceil(usuarios.length / itemsPerPage)
+      setTotalPages(totalPagesCount)
+      setTotalItems(usuarios.length)
+      
       // Verificar se a página está vazia e voltar para a anterior se necessário
-      return checkEmptyPageAndGoBack(items, page)
+      return checkEmptyPageAndGoBack(paginatedItems, page)
     } catch (error) {
-      console.error("Erro ao buscar veículos:", error)
-      toast.error("Não foi possível carregar os veículos", {
-        duration: 2000,
-      })
+      console.error("Erro ao buscar usuários:", error)
+      toast.error("Não foi possível carregar os usuários", { duration: 2000 })
       return false
     } finally {
       setLoading(false)
@@ -152,35 +86,23 @@ export function VeiculosContent() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este veículo?")) return
+    if (!confirm("Tem certeza que deseja excluir este usuário?")) return
 
     setLoadingDelete(true)
 
     try {
-      const token = Cookies.get("access_token")
-      if (!token) throw new Error("Token não encontrado")
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_veiculos/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      // Simulando uma chamada de API
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      // Removendo o usuário da lista
+      setUsuarios(prev => prev.filter(usuario => usuario.id !== id))
+      
+      toast.success("Usuário excluído com sucesso", {
+        duration: 2000,
       })
-
-      if (!response.ok) throw new Error("Falha ao excluir veículo")
-
-      // Após excluir, recarregar os dados da página atual
-      const pageChanged = await fetchVeiculos(currentPage)
-
-      // Se a página não mudou (não estava vazia), mostrar mensagem de sucesso
-      if (!pageChanged) {
-        toast.success("Veículo excluído com sucesso", {
-          duration: 2000,
-        })
-      }
     } catch (error) {
-      console.error("Erro ao excluir veículo:", error)
-      toast.error("Não foi possível excluir o veículo", {
+      console.error("Erro ao excluir usuário:", error)
+      toast.error("Não foi possível excluir o usuário", {
         duration: 2000,
       })
     } finally {
@@ -193,37 +115,37 @@ export function VeiculosContent() {
     if (!token) {
       router.push("/users/login")
     } else {
-      fetchVeiculos(1)
+      fetchUsuarios(1)
     }
   }, [])
 
   useEffect(() => {
     setCurrentPage(1)
-    fetchVeiculos(1)
+    fetchUsuarios(1)
   }, [searchTerm])
 
-  const filteredVeiculos = Array.isArray(veiculos)
-    ? veiculos.filter(
-        (veiculo) =>
-          veiculo.placa?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          veiculo.descricao?.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
-    : []
+  const filteredUsuarios = usuarios.filter(
+    (usuario) =>
+      usuario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      usuario.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      usuario.cargo.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   // Use this for displaying the count:
-  const displayedItemsCount = filteredVeiculos.length
+  const displayedItemsCount = filteredUsuarios.length
 
-  const handleNovoVeiculoSuccess = () => {
-    fetchVeiculos(currentPage)
+  const handleNovoUsuarioSuccess = (novoUsuario: Usuario) => {
+    setUsuarios(prev => [...prev, novoUsuario])
     setIsDialogOpen(false)
-    setSelectedVeiculo(null)
+    setSelectedUsuario(null)
+    toast.success("Usuário salvo com sucesso", { duration: 2000 })
   }
 
-  const [currentPageNav, setCurrentPageNav] = useState("veiculos")
+  const [currentPageNav, setCurrentPageNav] = useState("usuarios")
 
   useEffect(() => {
     if (!isDialogOpen) {
-      setSelectedVeiculo(null)
+      setSelectedUsuario(null)
     }
   }, [isDialogOpen])
 
@@ -233,7 +155,7 @@ export function VeiculosContent() {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
       setLoadingPagination(true)
-      fetchVeiculos(page)
+      fetchUsuarios(page)
     }
   }
 
@@ -295,39 +217,117 @@ export function VeiculosContent() {
   return (
     <Layout currentPage={currentPageNav} onNavigate={setCurrentPageNav}>
       <>
-        {/* Cabeçalho com título e botão de novo veículo */}
+        {/* Cabeçalho com título e botão de novo usuário */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Veículos</h1>
-            <p className="text-sm text-gray-500 mt-1">Gerencie seus veículos</p>
+            <h1 className="text-2xl font-bold text-gray-800">Usuários</h1>
+            <p className="text-sm text-gray-500 mt-1">Gerencie os usuários do sistema</p>
           </div>
 
           <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <SheetTrigger asChild>
               <Button className="bg-red-500 hover:bg-red-600 text-white font-medium rounded-md flex items-center gap-2 transition-colors w-full sm:w-auto">
-                <Car size={16} />
-                <span>Novo Veículo</span>
+                <UserPlus size={16} />
+                <span>Novo Usuário</span>
               </Button>
             </SheetTrigger>
 
             <SheetContent className="max-h-screen overflow-auto p-4 sm:max-w-md">
               <SheetHeader>
                 <SheetTitle className="text-xl font-semibold">
-                  {selectedVeiculo ? "Editar Veículo" : "Novo Veículo"}
+                  {selectedUsuario ? "Editar Usuário" : "Novo Usuário"}
                 </SheetTitle>
                 <SheetDescription className="text-sm">
-                  {selectedVeiculo ? "Edite os dados do veículo abaixo." : "Cadastre um novo veículo abaixo."}
+                  {selectedUsuario ? "Edite os dados do usuário abaixo." : "Cadastre um novo usuário abaixo."}
                 </SheetDescription>
               </SheetHeader>
 
-              <NovoVeiculoForm
-                onSuccess={handleNovoVeiculoSuccess}
-                onCancel={() => {
-                  setIsDialogOpen(false)
-                  setSelectedVeiculo(null)
-                }}
-                veiculo={selectedVeiculo}
-              />
+              <div className="space-y-4 mt-6">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Nome</label>
+                  <Input 
+                    placeholder="Nome completo" 
+                    defaultValue={selectedUsuario?.nome || ""}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Email</label>
+                  <Input 
+                    type="email" 
+                    placeholder="email@exemplo.com" 
+                    defaultValue={selectedUsuario?.email || ""}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Senha</label>
+                  <Input 
+                    type="password" 
+                    placeholder={selectedUsuario ? "••••••••" : "Digite a senha"}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Cargo</label>
+                  <select className="w-full p-2 border rounded-md">
+                    <option value="">Selecione um cargo</option>
+                    <option value="Administrador" selected={selectedUsuario?.cargo === "Administrador"}>Administrador</option>
+                    <option value="Gerente" selected={selectedUsuario?.cargo === "Gerente"}>Gerente</option>
+                    <option value="Operador" selected={selectedUsuario?.cargo === "Operador"}>Operador</option>
+                    <option value="Atendente" selected={selectedUsuario?.cargo === "Atendente"}>Atendente</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2">
+                      <input 
+                        type="radio" 
+                        name="status" 
+                        value="Ativo" 
+                        defaultChecked={!selectedUsuario || selectedUsuario.status === "Ativo"}
+                      />
+                      <span>Ativo</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input 
+                        type="radio" 
+                        name="status" 
+                        value="Inativo" 
+                        defaultChecked={selectedUsuario?.status === "Inativo"}
+                      />
+                      <span>Inativo</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                    onClick={() => {
+                      const novoId = (Math.max(...usuarios.map(u => parseInt(u.id))) + 1).toString();
+                      handleNovoUsuarioSuccess({
+                        id: novoId,
+                        nome: "Novo Usuário",
+                        email: "novo@sistema.com",
+                        cargo: "Operador",
+                        status: "Ativo"
+                      });
+                    }}
+                  >
+                    Salvar
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
             </SheetContent>
           </Sheet>
         </div>
@@ -345,12 +345,12 @@ export function VeiculosContent() {
           <CardContent className="p-4">
             <div className="flex flex-col space-y-4">
               <div className="w-full">
-                <label className="block text-sm font-medium mb-1">Buscar Veículos</label>
+                <label className="block text-sm font-medium mb-1">Buscar Usuários</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   <Input
                     className="pl-10 w-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-                    placeholder="Buscar por placa ou descrição..."
+                    placeholder="Buscar por nome, email ou cargo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -373,9 +373,9 @@ export function VeiculosContent() {
           <CardHeader className="p-4 pb-2">
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle className="text-lg font-semibold">Lista de Veículos</CardTitle>
+                <CardTitle className="text-lg font-semibold">Lista de Usuários</CardTitle>
                 <p className="text-sm text-gray-500 mt-1">
-                  {displayedItemsCount} {displayedItemsCount === 1 ? "veículo encontrado" : "veículos encontrados"}
+                  {displayedItemsCount} {displayedItemsCount === 1 ? "usuário encontrado" : "usuários encontrados"}
                   {totalItems > 0 && ` de ${totalItems} total`}
                 </p>
               </div>
@@ -456,36 +456,47 @@ export function VeiculosContent() {
                   <div className="relative w-16 h-16">
                     <div className="absolute inset-0 rounded-full border-4 border-t-red-500 border-r-red-300 border-b-red-200 border-l-red-100 animate-spin"></div>
                   </div>
-                  <p className="text-gray-500 mt-4 font-medium">Carregando veículos...</p>
+                  <p className="text-gray-500 mt-4 font-medium">Carregando usuários...</p>
                 </div>
               </div>
             ) : (
               <>
                 {/* Mobile card view */}
                 <div className="sm:hidden space-y-3">
-                  {filteredVeiculos.length === 0 ? (
+                  {filteredUsuarios.length === 0 ? (
                     <div className="py-12 text-center text-gray-500">
                       <div className="flex flex-col items-center gap-2">
-                        <p className="text-lg">Nenhum veículo encontrado</p>
-                        <p className="text-sm text-gray-400">Tente ajustar os filtros ou adicione um novo veículo</p>
+                        <p className="text-lg">Nenhum usuário encontrado</p>
+                        <p className="text-sm text-gray-400">Tente ajustar os filtros ou adicione um novo usuário</p>
                       </div>
                     </div>
                   ) : (
-                    filteredVeiculos.map((veiculo) => (
-                      <div key={veiculo.id} className="bg-white border rounded-lg p-4 shadow-sm">
+                    filteredUsuarios.map((usuario) => (
+                      <div key={usuario.id} className="bg-white border rounded-lg p-4 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <Badge variant="outline" className="mb-2 bg-gray-50">
-                              {veiculo.placa}
-                            </Badge>
-                            <h3 className="font-medium text-lg">{veiculo.descricao}</h3>
+                            <h3 className="font-medium text-lg">{usuario.nome}</h3>
+                            <p className="text-sm text-gray-500">{usuario.email}</p>
+                            <div className="flex gap-2 mt-2">
+                              <Badge variant="outline" className="bg-gray-50">
+                                {usuario.cargo}
+                              </Badge>
+                              <Badge 
+                                className={usuario.status === "Ativo" 
+                                  ? "bg-green-100 text-green-800 border-green-200" 
+                                  : "bg-gray-100 text-gray-800 border-gray-200"
+                                }
+                              >
+                                {usuario.status}
+                              </Badge>
+                            </div>
                           </div>
                           <div className="flex gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => {
-                                setSelectedVeiculo(veiculo)
+                                setSelectedUsuario(usuario)
                                 setIsDialogOpen(true)
                               }}
                               className="hover:bg-blue-50 transition-colors h-8 w-8"
@@ -495,7 +506,7 @@ export function VeiculosContent() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDelete(veiculo.id)}
+                              onClick={() => handleDelete(usuario.id)}
                               disabled={loadingDelete}
                               className="hover:bg-red-50 transition-colors h-8 w-8"
                             >
@@ -517,35 +528,52 @@ export function VeiculosContent() {
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="bg-gray-50">
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Placa</th>
-                        <th className="py-3 px-4 font-semibold text-gray-700 border-b text-center">Descrição</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Nome</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Email</th>
+                        <th className="py-3 px-4 font-semibold text-gray-700 border-b text-center">Cargo</th>
+                        <th className="py-3 px-4 font-semibold text-gray-700 border-b text-center">Status</th>
                         <th className="py-3 px-4 font-semibold text-gray-700 border-b text-right">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredVeiculos.length === 0 ? (
+                      {filteredUsuarios.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="py-12 text-center text-gray-500">
+                          <td colSpan={5} className="py-12 text-center text-gray-500">
                             <div className="flex flex-col items-center gap-2">
-                              <p className="text-lg">Nenhum veículo encontrado</p>
+                              <p className="text-lg">Nenhum usuário encontrado</p>
                               <p className="text-sm text-gray-400">
-                                Tente ajustar os filtros ou adicione um novo veículo
+                                Tente ajustar os filtros ou adicione um novo usuário
                               </p>
                             </div>
                           </td>
                         </tr>
                       ) : (
-                        filteredVeiculos.map((veiculo) => (
-                          <tr key={veiculo.id} className="border-b hover:bg-gray-50 transition-colors">
-                            <td className="py-3 px-4 text-gray-700">{veiculo.placa}</td>
-                            <td className="py-3 px-4 text-center text-gray-700">{veiculo.descricao}</td>
+                        filteredUsuarios.map((usuario) => (
+                          <tr key={usuario.id} className="border-b hover:bg-gray-50 transition-colors">
+                            <td className="py-3 px-4 text-gray-700">{usuario.nome}</td>
+                            <td className="py-3 px-4 text-gray-700">{usuario.email}</td>
+                            <td className="py-3 px-4 text-center">
+                              <Badge variant="outline" className="bg-gray-50">
+                                {usuario.cargo}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <Badge 
+                                className={usuario.status === "Ativo" 
+                                  ? "bg-green-100 text-green-800 border-green-200" 
+                                  : "bg-gray-100 text-gray-800 border-gray-200"
+                                }
+                              >
+                                {usuario.status}
+                              </Badge>
+                            </td>
                             <td className="py-3 px-4">
                               <div className="flex justify-end gap-2">
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => {
-                                    setSelectedVeiculo(veiculo)
+                                    setSelectedUsuario(usuario)
                                     setIsDialogOpen(true)
                                   }}
                                   className="hover:bg-blue-50 transition-colors"
@@ -555,7 +583,7 @@ export function VeiculosContent() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleDelete(veiculo.id)}
+                                  onClick={() => handleDelete(usuario.id)}
                                   disabled={loadingDelete}
                                   className="hover:bg-red-50 transition-colors"
                                 >

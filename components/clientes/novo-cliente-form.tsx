@@ -7,10 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Cookies from "js-cookie"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Loader2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type NovoClienteFormProps = {
   onSuccess: () => void
@@ -55,42 +53,11 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
     formState: { isSubmitting, errors },
   } = useForm<FormValues>()
 
-  const [termoPesquisaCidade, setTermoPesquisaCidade] = useState("")
   const [cidades, setCidades] = useState<Cidade[]>([])
   const [cidadeSelecionada, setCidadeSelecionada] = useState<Cidade | null>(null)
   const [carregandoCidades, setCarregandoCidades] = useState(false)
-  const [cidadeAberta, setCidadeAberta] = useState(false)
-
-  const buscarCidades = async (termo: string) => {
-    if (!termo || termo.length < 3) return
-
-    setCarregandoCidades(true)
-    try {
-      const token = Cookies.get("access_token")
-      if (!token) throw new Error("Token não encontrado")
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/g_cidades?page=1`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (!response.ok) throw new Error("Falha ao buscar cidades")
-
-      const data = await response.json()
-
-      const cidadesFiltradas = Array.isArray(data.data.items)
-        ? data.data.items.filter((cidade: Cidade) => cidade.descricao.toLowerCase().includes(termo.toLowerCase()))
-        : []
-
-      setCidades(cidadesFiltradas)
-    } catch (error) {
-      console.error("Erro ao buscar cidades:", error)
-      toast.error("Não foi possível carregar as cidades", { duration: 2000 })
-    } finally {
-      setCarregandoCidades(false)
-    }
-  }
+  const [termoPesquisa, setTermoPesquisa] = useState("")
+  const [cidadesFiltradas, setCidadesFiltradas] = useState<Cidade[]>([])
 
   const buscarCidadePorId = async (id: string | number) => {
     try {
@@ -116,16 +83,6 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
       return null
     }
   }
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (termoPesquisaCidade) {
-        buscarCidades(termoPesquisaCidade)
-      }
-    }, 500) // Debounce de 500ms
-
-    return () => clearTimeout(timeoutId)
-  }, [termoPesquisaCidade])
 
   useEffect(() => {
     if (cliente) {
@@ -209,16 +166,17 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
         throw new Error(errorData?.error || "Falha ao criar cliente")
       }
 
-      toast.success(cliente ? "Cliente atualizado com sucesso" : "Cliente criado com sucesso", { duration: 2000 })
+      toast.success(cliente ? "Cliente atualizado com sucesso" : "Cliente criado com sucesso", { duration: 1000 })
       onSuccess()
       reset()
     } catch (error: any) {
-      toast.error(error.message || "Erro ao criar cliente", { duration: 2000 })
+      toast.error(error.message || "Erro ao criar cliente", { duration: 1000 })
     }
   }
 
   const carregarTodasCidades = async () => {
     try {
+      setCarregandoCidades(true)
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
@@ -244,6 +202,8 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
     } catch (error) {
       console.error("Erro ao carregar todas as cidades:", error)
       return []
+    } finally {
+      setCarregandoCidades(false)
     }
   }
 
@@ -252,11 +212,22 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
       const todasCidades = await carregarTodasCidades()
       if (todasCidades.length > 0) {
         setCidades(todasCidades)
+        setCidadesFiltradas(todasCidades)
       }
     }
 
     inicializarCidades()
   }, [])
+
+  // Filtrar cidades quando o termo de pesquisa mudar
+  useEffect(() => {
+    if (termoPesquisa.length >= 3) {
+      const filtradas = cidades.filter((cidade) => cidade.descricao.toLowerCase().includes(termoPesquisa.toLowerCase()))
+      setCidadesFiltradas(filtradas)
+    } else {
+      setCidadesFiltradas(cidades)
+    }
+  }, [termoPesquisa, cidades])
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
@@ -370,73 +341,55 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
         {errors.complemento && <span className="text-sm text-red-500">Complemento é obrigatório</span>}
       </div>
 
-      {/* Cidade - Autocomplete */}
+      {/* Cidade - Select Nativo */}
       <div className="flex flex-col gap-1 mb-4">
         <Label htmlFor="g_cidade_id" className="font-bold mb-2">
           Cidade:
         </Label>
+
+        {/* Campo de pesquisa para filtrar cidades */}
         <Controller
           name="g_cidade_id"
           control={control}
           rules={{ required: true }}
           render={({ field }) => (
-            <div className="relative z-10">
-              <Popover open={cidadeAberta} onOpenChange={setCidadeAberta}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={cidadeAberta}
-                    className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
-                    onClick={() => console.log("Cidade selecionada:", cidadeSelecionada)}
-                  >
-                    {cidadeSelecionada
-                      ? `${cidadeSelecionada.descricao || ""} ${cidadeSelecionada.g_estado?.uf_descricao ? `- ${cidadeSelecionada.g_estado.uf_descricao}` : ""}`
-                      : "Selecione uma cidade"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0 z-[9999]">
-                  <Command>
-                    <CommandInput
-                      placeholder="Buscar cidade..."
-                      value={termoPesquisaCidade}
-                      onValueChange={setTermoPesquisaCidade}
-                    />
-                    {carregandoCidades && (
-                      <div className="flex items-center justify-center p-4">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="ml-2">Carregando cidades...</span>
+            <div className="relative">
+              {carregandoCidades ? (
+                <div className="flex items-center justify-center p-4 border rounded-md">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <span>Carregando cidades...</span>
+                </div>
+              ) : (
+                <Select
+                  value={field.value?.toString()}
+                  onValueChange={(value) => {
+                    field.onChange(value)
+                    const cidade = cidades.find((c) => c.id.toString() === value)
+                    if (cidade) {
+                      setCidadeSelecionada(cidade)
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione uma cidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cidadesFiltradas.length > 0 ? (
+                      cidadesFiltradas.map((cidade) => (
+                        <SelectItem key={cidade.id} value={cidade.id.toString()}>
+                          {cidade.descricao} {cidade.g_estado?.uf_descricao ? `- ${cidade.g_estado.uf_descricao}` : ""}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-2 text-center text-gray-500">
+                        {termoPesquisa.length >= 3
+                          ? "Nenhuma cidade encontrada"
+                          : "Digite pelo menos 3 caracteres para buscar"}
                       </div>
                     )}
-                    <CommandEmpty>
-                      {termoPesquisaCidade.length < 3
-                        ? "Digite pelo menos 3 caracteres para buscar"
-                        : "Nenhuma cidade encontrada"}
-                    </CommandEmpty>
-                    <CommandList>
-                      <CommandGroup>
-                        {cidades.map((cidade) => (
-                          <CommandItem
-                            key={cidade.id}
-                            value={cidade.descricao}
-                            onSelect={() => {
-                              setValue("g_cidade_id", cidade.id)
-                              setCidadeSelecionada(cidade)
-                              setCidadeAberta(false)
-                            }}
-                          >
-                            <Check
-                              className={cn("mr-2 h-4 w-4", field.value === cidade.id ? "opacity-100" : "opacity-0")}
-                            />
-                            {cidade.descricao} - {cidade.g_estado?.uf_descricao || ""}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           )}
         />

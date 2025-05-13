@@ -5,12 +5,8 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Check, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
 import Cookies from "js-cookie"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Loader2 } from "lucide-react"
 
 type VeiculoFormProps = {
   onSuccess: () => void
@@ -73,11 +69,20 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
   const [loading, setLoading] = useState(true)
   const [debugInfo, setDebugInfo] = useState<string>("")
 
+  // Estados para armazenar os textos dos itens selecionados
+  const [categoriaTexto, setCategoriaTexto] = useState<string>("")
+  const [modeloTexto, setModeloTexto] = useState<string>("")
+  const [corTexto, setCorTexto] = useState<string>("")
+  const [fabricanteTexto, setFabricanteTexto] = useState<string>("")
+  const [clienteTexto, setClienteTexto] = useState<string>("")
+
   const {
     register,
     handleSubmit,
     control,
     reset,
+    setValue,
+    watch,
     formState: { isSubmitting, errors },
   } = useForm<FormValues>({
     defaultValues: {
@@ -209,7 +214,8 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       if (!response.ok) throw new Error("Falha ao buscar clientes")
 
       const data = await response.json()
-      setClientes(Array.isArray(data.data.items) ? data.data.items : [])
+      const clientesArray = Array.isArray(data.data.items) ? data.data.items : []
+      setClientes(clientesArray)
     } catch (error) {
       console.error("Erro ao buscar clientes:", error)
       toast.error("Não foi possível carregar os clientes", { duration: 2000 })
@@ -224,11 +230,6 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       try {
         await Promise.all([fetchModelos(), fetchCores(), fetchFabricantes(), fetchCategorias(), fetchClientes()])
         console.log("Todos os dados carregados")
-        console.log("Modelos:", modelos.length)
-        console.log("Cores:", cores.length)
-        console.log("Fabricantes:", fabricantes.length)
-        console.log("Categorias:", categorias.length)
-        console.log("Clientes:", clientes.length)
       } catch (error) {
         console.error("Erro ao carregar dados:", error)
         toast.error("Ocorreu um erro ao carregar os dados", { duration: 2000 })
@@ -239,6 +240,74 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
 
     fetchData()
   }, [])
+
+  // Atualizar os textos dos itens selecionados quando os dados forem carregados ou o veículo for carregado
+  useEffect(() => {
+    if (veiculo) {
+      reset({
+        placa: veiculo.placa,
+        descricao: veiculo.descricao,
+        v_modelo_id: veiculo.v_modelo_id,
+        v_cor_id: veiculo.v_cor_id,
+        v_fabricante_id: veiculo.v_fabricante_id,
+        c_cliente_id: veiculo.c_cliente_id,
+        v_categoria_id: veiculo.v_categoria_id || "",
+        c_empresa_id: "1", // Valor padrão para c_empresa_id
+      })
+
+      // Atualizar os textos dos itens selecionados
+      const categoria = categorias.find((c) => c.id === veiculo.v_categoria_id)
+      if (categoria) setCategoriaTexto(categoria.descricao)
+
+      const modelo = modelos.find((m) => m.id === veiculo.v_modelo_id)
+      if (modelo) setModeloTexto(modelo.descricao)
+
+      const cor = cores.find((c) => c.id === veiculo.v_cor_id)
+      if (cor) setCorTexto(cor.descricao)
+
+      const fabricante = fabricantes.find((f) => f.id === veiculo.v_fabricante_id)
+      if (fabricante) setFabricanteTexto(fabricante.descricao)
+
+      const cliente = clientes.find((c) => c.id === veiculo.c_cliente_id)
+      if (cliente) setClienteTexto(`${cliente.nome_completo} - ${cliente.cpf_cnpj}`)
+    }
+  }, [veiculo, reset, categorias, modelos, cores, fabricantes, clientes])
+
+  // Observar mudanças nos valores do formulário para atualizar os textos
+  const watchedValues = watch()
+
+  useEffect(() => {
+    // Atualizar textos quando os valores mudarem
+    const categoriaId = watchedValues.v_categoria_id
+    if (categoriaId) {
+      const categoria = categorias.find((c) => c.id === categoriaId)
+      if (categoria) setCategoriaTexto(categoria.descricao)
+    }
+
+    const modeloId = watchedValues.v_modelo_id
+    if (modeloId) {
+      const modelo = modelos.find((m) => m.id === modeloId)
+      if (modelo) setModeloTexto(modelo.descricao)
+    }
+
+    const corId = watchedValues.v_cor_id
+    if (corId) {
+      const cor = cores.find((c) => c.id === corId)
+      if (cor) setCorTexto(cor.descricao)
+    }
+
+    const fabricanteId = watchedValues.v_fabricante_id
+    if (fabricanteId) {
+      const fabricante = fabricantes.find((f) => f.id === fabricanteId)
+      if (fabricante) setFabricanteTexto(fabricante.descricao)
+    }
+
+    const clienteId = watchedValues.c_cliente_id
+    if (clienteId) {
+      const cliente = clientes.find((c) => c.id === clienteId)
+      if (cliente) setClienteTexto(`${cliente.nome_completo} - ${cliente.cpf_cnpj}`)
+    }
+  }, [watchedValues, categorias, modelos, cores, fabricantes, clientes])
 
   const onSubmit = async (data: FormValues) => {
     try {
@@ -350,25 +419,10 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
     }
   }
 
-  useEffect(() => {
-    if (veiculo) {
-      reset({
-        placa: veiculo.placa,
-        descricao: veiculo.descricao,
-        v_modelo_id: veiculo.v_modelo_id,
-        v_cor_id: veiculo.v_cor_id,
-        v_fabricante_id: veiculo.v_fabricante_id,
-        c_cliente_id: veiculo.c_cliente_id,
-        v_categoria_id: veiculo.v_categoria_id || "",
-        c_empresa_id: "1", // Valor padrão para c_empresa_id
-      })
-    }
-  }, [veiculo, reset])
-
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+        <Loader2 className="mr-2 h-8 w-8 animate-spin" />
         <span className="ml-2">Carregando dados...</span>
       </div>
     )
@@ -383,245 +437,280 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-        <Label htmlFor="placa" className="text-left font-bold">
+      <div className="flex flex-col gap-1 mb-4">
+        <Label htmlFor="placa" className="font-bold mb-2">
           Placa:
         </Label>
-        <Input
-          id="placa"
-          {...register("placa", { required: true })}
-          placeholder="Digite a placa..."
-          className="col-span-3 w-full"
-        />
-        {errors.placa && <span className="text-red-500 text-sm col-span-3 col-start-2">Placa é obrigatória</span>}
+        <Input id="placa" {...register("placa", { required: true })} placeholder="Digite a placa..." />
+        {errors.placa && <span className="text-sm text-red-500">Placa é obrigatória</span>}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-        <Label htmlFor="descricao" className="text-left font-bold">
+      <div className="flex flex-col gap-1 mb-4">
+        <Label htmlFor="descricao" className="font-bold mb-2">
           Descrição:
         </Label>
-        <Input
-          id="descricao"
-          {...register("descricao", { required: true })}
-          placeholder="Digite a descrição..."
-          className="col-span-3 w-full"
-        />
-        {errors.descricao && (
-          <span className="text-red-500 text-sm col-span-3 col-start-2">Descrição é obrigatória</span>
-        )}
+        <Input id="descricao" {...register("descricao", { required: true })} placeholder="Digite a descrição..." />
+        {errors.descricao && <span className="text-sm text-red-500">Descrição é obrigatória</span>}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-        <Label htmlFor="v_categoria_id" className="text-left font-bold">
+      <div className="flex flex-col gap-1 mb-4">
+        <Label htmlFor="v_categoria_id" className="font-bold mb-2">
           Categoria:
         </Label>
-        <div className="col-span-3 w-full">
+        <div className="relative">
           <Controller
             name="v_categoria_id"
             control={control}
             rules={{ required: true }}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange} defaultValue={veiculo?.v_categoria_id}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione uma categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categorias.length === 0 ? (
-                    <SelectItem value="loading" disabled>
-                      Carregando categorias...
-                    </SelectItem>
-                  ) : (
-                    categorias.map((categoria) => (
-                      <SelectItem key={categoria.id} value={categoria.id}>
-                        {categoria.descricao}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <select
+                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
+                value={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.value)
+                  const categoria = categorias.find((c) => c.id === e.target.value)
+                  if (categoria) setCategoriaTexto(categoria.descricao)
+                }}
+              >
+                <option value="" disabled>
+                  Selecione uma categoria
+                </option>
+                {categorias.map((categoria) => (
+                  <option key={categoria.id} value={categoria.id}>
+                    {categoria.descricao}
+                  </option>
+                ))}
+              </select>
             )}
           />
-          {errors.v_categoria_id && <span className="text-red-500 text-sm">Categoria é obrigatória</span>}
-          {categorias.length === 0 && !loading && (
-            <span className="text-amber-500 text-sm">
-              Nenhuma categoria encontrada. Cadastre uma categoria primeiro.
-            </span>
-          )}
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <svg
+              className="h-5 w-5 text-gray-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
         </div>
+        {errors.v_categoria_id && <span className="text-sm text-red-500">Categoria é obrigatória</span>}
+        {categorias.length === 0 && !loading && (
+          <span className="text-sm text-amber-500">Nenhuma categoria encontrada. Cadastre uma categoria primeiro.</span>
+        )}
       </div>
 
-      {/* Modifique os componentes Select para garantir que os dados sejam renderizados corretamente */}
-      {/* Substitua o componente Select para Modelo */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-        <Label htmlFor="v_modelo_id" className="text-left font-bold">
+      <div className="flex flex-col gap-1 mb-4">
+        <Label htmlFor="v_modelo_id" className="font-bold mb-2">
           Modelo:
         </Label>
-        <div className="col-span-3 w-full">
+        <div className="relative">
           <Controller
             name="v_modelo_id"
             control={control}
             rules={{ required: true }}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange} defaultValue={veiculo?.v_modelo_id}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione um modelo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {modelos.length === 0 ? (
-                    <SelectItem value="loading" disabled>
-                      Carregando modelos...
-                    </SelectItem>
-                  ) : (
-                    modelos.map((modelo) => (
-                      <SelectItem key={modelo.id} value={modelo.id}>
-                        {modelo.descricao}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <select
+                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
+                value={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.value)
+                  const modelo = modelos.find((m) => m.id === e.target.value)
+                  if (modelo) setModeloTexto(modelo.descricao)
+                }}
+              >
+                <option value="" disabled>
+                  Selecione um modelo
+                </option>
+                {modelos.map((modelo) => (
+                  <option key={modelo.id} value={modelo.id}>
+                    {modelo.descricao}
+                  </option>
+                ))}
+              </select>
             )}
           />
-          {errors.v_modelo_id && <span className="text-red-500 text-sm">Modelo é obrigatório</span>}
-          {modelos.length === 0 && !loading && (
-            <span className="text-amber-500 text-sm">Nenhum modelo encontrado. Cadastre um modelo primeiro.</span>
-          )}
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <svg
+              className="h-5 w-5 text-gray-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
         </div>
+        {errors.v_modelo_id && <span className="text-sm text-red-500">Modelo é obrigatório</span>}
+        {modelos.length === 0 && !loading && (
+          <span className="text-sm text-amber-500">Nenhum modelo encontrado. Cadastre um modelo primeiro.</span>
+        )}
       </div>
 
-      {/* Substitua o componente Select para Cor */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-        <Label htmlFor="v_cor_id" className="text-left font-bold">
+      <div className="flex flex-col gap-1 mb-4">
+        <Label htmlFor="v_cor_id" className="font-bold mb-2">
           Cor:
         </Label>
-        <div className="col-span-3 w-full">
+        <div className="relative">
           <Controller
             name="v_cor_id"
             control={control}
             rules={{ required: true }}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange} defaultValue={veiculo?.v_cor_id}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione uma cor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cores.length === 0 ? (
-                    <SelectItem value="loading" disabled>
-                      Carregando cores...
-                    </SelectItem>
-                  ) : (
-                    cores.map((cor) => (
-                      <SelectItem key={cor.id} value={cor.id}>
-                        {cor.descricao}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <select
+                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
+                value={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.value)
+                  const cor = cores.find((c) => c.id === e.target.value)
+                  if (cor) setCorTexto(cor.descricao)
+                }}
+              >
+                <option value="" disabled>
+                  Selecione uma cor
+                </option>
+                {cores.map((cor) => (
+                  <option key={cor.id} value={cor.id}>
+                    {cor.descricao}
+                  </option>
+                ))}
+              </select>
             )}
           />
-          {errors.v_cor_id && <span className="text-red-500 text-sm">Cor é obrigatória</span>}
-          {cores.length === 0 && !loading && (
-            <span className="text-amber-500 text-sm">Nenhuma cor encontrada. Cadastre uma cor primeiro.</span>
-          )}
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <svg
+              className="h-5 w-5 text-gray-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
         </div>
+        {errors.v_cor_id && <span className="text-sm text-red-500">Cor é obrigatória</span>}
+        {cores.length === 0 && !loading && (
+          <span className="text-sm text-amber-500">Nenhuma cor encontrada. Cadastre uma cor primeiro.</span>
+        )}
       </div>
 
-      {/* Substitua o componente Select para Fabricante */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-        <Label htmlFor="v_fabricante_id" className="text-left font-bold">
+      <div className="flex flex-col gap-1 mb-4">
+        <Label htmlFor="v_fabricante_id" className="font-bold mb-2">
           Fabricante:
         </Label>
-        <div className="col-span-3 w-full">
+        <div className="relative">
           <Controller
             name="v_fabricante_id"
             control={control}
             rules={{ required: true }}
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange} defaultValue={veiculo?.v_fabricante_id}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione um fabricante" />
-                </SelectTrigger>
-                <SelectContent>
-                  {fabricantes.length === 0 ? (
-                    <SelectItem value="loading" disabled>
-                      Carregando fabricantes...
-                    </SelectItem>
-                  ) : (
-                    fabricantes.map((fabricante) => (
-                      <SelectItem key={fabricante.id} value={fabricante.id}>
-                        {fabricante.descricao}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <select
+                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
+                value={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.value)
+                  const fabricante = fabricantes.find((f) => f.id === e.target.value)
+                  if (fabricante) setFabricanteTexto(fabricante.descricao)
+                }}
+              >
+                <option value="" disabled>
+                  Selecione um fabricante
+                </option>
+                {fabricantes.map((fabricante) => (
+                  <option key={fabricante.id} value={fabricante.id}>
+                    {fabricante.descricao}
+                  </option>
+                ))}
+              </select>
             )}
           />
-          {errors.v_fabricante_id && <span className="text-red-500 text-sm">Fabricante é obrigatório</span>}
-          {fabricantes.length === 0 && !loading && (
-            <span className="text-amber-500 text-sm">
-              Nenhum fabricante encontrado. Cadastre um fabricante primeiro.
-            </span>
-          )}
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <svg
+              className="h-5 w-5 text-gray-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
         </div>
+        {errors.v_fabricante_id && <span className="text-sm text-red-500">Fabricante é obrigatório</span>}
+        {fabricantes.length === 0 && !loading && (
+          <span className="text-sm text-amber-500">Nenhum fabricante encontrado. Cadastre um fabricante primeiro.</span>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-        <Label htmlFor="c_cliente_id" className="text-left font-bold">
+      <div className="flex flex-col gap-1 mb-4">
+        <Label htmlFor="c_cliente_id" className="font-bold mb-2">
           Cliente:
         </Label>
-        <div className="col-span-3 w-full">
+        <div className="relative">
           <Controller
             name="c_cliente_id"
             control={control}
             rules={{ required: true }}
             render={({ field }) => (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
-                  >
-                    {field.value
-                      ? clientes.find((cliente) => cliente.id === field.value)?.nome_completo || "Selecione um cliente"
-                      : "Selecione um cliente"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Buscar cliente por nome ou CPF/CNPJ..." />
-                    <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
-                    <CommandList>
-                      <CommandGroup>
-                        {clientes.map((cliente) => (
-                          <CommandItem
-                            key={cliente.id}
-                            value={`${cliente.nome_completo} ${cliente.cpf_cnpj}`}
-                            onSelect={() => {
-                              field.onChange(cliente.id)
-                            }}
-                          >
-                            <Check
-                              className={cn("mr-2 h-4 w-4", cliente.id === field.value ? "opacity-100" : "opacity-0")}
-                            />
-                            <div className="flex flex-col">
-                              <span>{cliente.nome_completo}</span>
-                              <span className="text-xs text-gray-500">{cliente.cpf_cnpj}</span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <select
+                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
+                value={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.value)
+                  const cliente = clientes.find((c) => c.id === e.target.value)
+                  if (cliente) setClienteTexto(`${cliente.nome_completo} - ${cliente.cpf_cnpj}`)
+                }}
+              >
+                <option value="" disabled>
+                  Selecione um cliente
+                </option>
+                {clientes.map((cliente) => (
+                  <option key={cliente.id} value={cliente.id}>
+                    {cliente.nome_completo} - {cliente.cpf_cnpj}
+                  </option>
+                ))}
+              </select>
             )}
           />
-          {errors.c_cliente_id && <span className="text-red-500 text-sm">Cliente é obrigatório</span>}
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <svg
+              className="h-5 w-5 text-gray-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
         </div>
+        {errors.c_cliente_id && <span className="text-sm text-red-500">Cliente é obrigatório</span>}
+        {clientes.length === 0 && !loading && (
+          <span className="text-sm text-amber-500">Nenhum cliente encontrado. Cadastre um cliente primeiro.</span>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

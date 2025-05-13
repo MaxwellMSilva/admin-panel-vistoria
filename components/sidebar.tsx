@@ -6,7 +6,17 @@ import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Users, LayoutDashboard, PlusIcon, Car, Settings, ChevronRight, LogOut } from "lucide-react"
+import {
+  Users,
+  LayoutDashboard,
+  PlusIcon,
+  Car,
+  Settings,
+  ChevronRight,
+  LogOut,
+  UserCog,
+  BadgeCheck,
+} from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Cookies from "js-cookie"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -99,6 +109,22 @@ function SidebarContent({ currentPage, onNavigate }: { currentPage?: string; onN
     },
   ]
 
+  // Novo menu de Pessoal
+  const pessoalItems = [
+    {
+      label: "Usuários",
+      href: "/usuarios",
+      value: "usuarios",
+      icon: UserCog,
+    },
+    {
+      label: "Cargos",
+      href: "/cargos",
+      value: "cargos",
+      icon: BadgeCheck,
+    },
+  ]
+
   const handleNavigation = (value: string) => {
     if (onNavigate) {
       onNavigate(value)
@@ -125,6 +151,57 @@ function SidebarContent({ currentPage, onNavigate }: { currentPage?: string; onN
         </div>
         <nav className="space-y-0.5">
           {navItems.map((item) => {
+            // Determina se o item está ativo com base no currentPage ou no pathname
+            const isActive =
+              currentPage === item.value ||
+              (!currentPage && pathname === item.href) ||
+              (pathname && pathname.startsWith(item.href) && item.href !== "/")
+
+            return (
+              <Link href={item.href} key={item.href} onClick={() => handleNavigation(item.value)}>
+                <div
+                  className={cn(
+                    "group relative",
+                    isActive &&
+                      "after:absolute after:left-0 after:top-1/2 after:-translate-y-1/2 after:h-6 after:w-1 after:bg-red-500 after:rounded-r-full",
+                  )}
+                >
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-start gap-2 text-sm h-9 rounded-lg transition-all duration-200",
+                      isActive
+                        ? "font-medium bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30"
+                        : "font-normal text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex items-center justify-center h-5 w-5 rounded-md transition-all duration-200",
+                        isActive
+                          ? "text-red-600 dark:text-red-400"
+                          : "text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300",
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" />
+                    </div>
+                    <span>{item.label}</span>
+                    {isActive && <ChevronRight className="h-3 w-3 ml-auto text-red-500 dark:text-red-400" />}
+                  </Button>
+                </div>
+              </Link>
+            )
+          })}
+        </nav>
+      </div>
+
+      {/* Menu de Pessoal - Nova seção */}
+      <div className="px-2 py-2">
+        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 px-2 dark:text-gray-400">
+          Pessoal
+        </div>
+        <nav className="space-y-0.5">
+          {pessoalItems.map((item) => {
             // Determina se o item está ativo com base no currentPage ou no pathname
             const isActive =
               currentPage === item.value ||
