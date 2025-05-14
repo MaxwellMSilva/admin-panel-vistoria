@@ -165,7 +165,7 @@ export function CadastrosContent() {
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar modelos:", error)
-      toast.error("Erro ao buscar modelos. Tente novamente.")
+      toast.error("Erro ao buscar modelos. Tente novamente.", { duration: 1000 })
       return false
     } finally {
       setLoading(false)
@@ -205,7 +205,7 @@ export function CadastrosContent() {
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar cores:", error)
-      toast.error("Erro ao buscar cores. Tente novamente.")
+      toast.error("Erro ao buscar cores. Tente novamente.", { duration: 1000 })
       return false
     } finally {
       setLoading(false)
@@ -245,7 +245,7 @@ export function CadastrosContent() {
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar fabricantes:", error)
-      toast.error("Erro ao buscar fabricantes. Tente novamente.")
+      toast.error("Erro ao buscar fabricantes. Tente novamente.", { duration: 1000 })
       return false
     } finally {
       setLoading(false)
@@ -285,7 +285,7 @@ export function CadastrosContent() {
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar categorias:", error)
-      toast.error("Erro ao buscar categorias. Tente novamente.")
+      toast.error("Erro ao buscar categorias. Tente novamente.", { duration: 1000 })
       return false
     } finally {
       setLoading(false)
@@ -336,15 +336,11 @@ export function CadastrosContent() {
 
       // Se a página não mudou (não estava vazia), mostrar mensagem de sucesso
       if (!pageChanged) {
-        toast.success(`${entityName} excluído(a) com sucesso`, {
-          duration: 2000,
-        })
+        toast.success(`${entityName} excluído(a) com sucesso`, { duration: 1000})
       }
     } catch (error) {
       console.error(`Erro ao excluir ${entityName}:`, error)
-      toast.error(`Não foi possível excluir ${entityName}`, {
-        duration: 2000,
-      })
+      toast.error(`Não foi possível excluir ${entityName}`, { duration: 1000 })
     } finally {
       setLoadingDelete(false)
     }

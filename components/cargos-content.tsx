@@ -10,7 +10,7 @@ import { Search, Trash2, Pencil, Loader, BadgeCheck, ChevronLeft, ChevronRight, 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { NovoCargoForm } from "./cargos/page"
+import { NovoCargoForm } from "./cargos/novo-cargo-form"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -146,7 +146,7 @@ export function CargosContent() {
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar cargos:", error)
-      toast.error("Não foi possível carregar os cargos", { duration: 2000 })
+      toast.error("Não foi possível carregar os cargos", { duration: 1000 })
 
       // Se a API ainda não estiver implementada, usar dados simulados
       const mockCargos = [
@@ -210,18 +210,18 @@ export function CargosContent() {
       // Se a página não mudou (não estava vazia), mostrar mensagem de sucesso
       if (!pageChanged) {
         toast.success("Cargo excluído com sucesso", {
-          duration: 2000,
+          duration: 1000,
         })
       }
     } catch (error) {
       console.error("Erro ao excluir cargo:", error)
       toast.error("Não foi possível excluir o cargo", {
-        duration: 2000,
+        duration: 1000,
       })
 
       // Se a API ainda não estiver implementada, remover localmente
       setCargos((prev) => prev.filter((cargo) => cargo.id !== id))
-      toast.success("Cargo excluído com sucesso", { duration: 2000 })
+      toast.success("Cargo excluído com sucesso", { duration: 1000 })
     } finally {
       setLoadingDelete(false)
     }

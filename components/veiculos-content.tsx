@@ -142,7 +142,7 @@ export function VeiculosContent() {
     } catch (error) {
       console.error("Erro ao buscar veículos:", error)
       toast.error("Não foi possível carregar os veículos", {
-        duration: 2000,
+        duration: 1000,
       })
       return false
     } finally {
@@ -175,13 +175,13 @@ export function VeiculosContent() {
       // Se a página não mudou (não estava vazia), mostrar mensagem de sucesso
       if (!pageChanged) {
         toast.success("Veículo excluído com sucesso", {
-          duration: 2000,
+          duration: 1000,
         })
       }
     } catch (error) {
       console.error("Erro ao excluir veículo:", error)
       toast.error("Não foi possível excluir o veículo", {
-        duration: 2000,
+        duration: 1000,
       })
     } finally {
       setLoadingDelete(false)

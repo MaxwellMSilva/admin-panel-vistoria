@@ -37,34 +37,28 @@ export function ClientesContent() {
 
   const router = useRouter()
 
-  // Helper function to extract pagination info from API response
   const extractPaginationInfo = (data: any) => {
     console.log("API Response Data:", data)
 
-    // Try different possible structures for pagination info
     let pages = 1
     let total = 0
 
     if (data && data.data) {
-      // Check for total_pages in data.data
       if (typeof data.data.total_pages === "number") {
         pages = data.data.total_pages
         console.log("Found total_pages in data.data:", pages)
       }
 
-      // Check for meta.total_pages
       if (data.data.meta && typeof data.data.meta.total_pages === "number") {
         pages = data.data.meta.total_pages
         console.log("Found total_pages in data.data.meta:", pages)
       }
 
-      // Check for pagination.total_pages
       if (data.data.pagination && typeof data.data.pagination.total_pages === "number") {
         pages = data.data.pagination.total_pages
         console.log("Found total_pages in data.data.pagination:", pages)
       }
 
-      // Check for total_items/count
       if (typeof data.data.total_items === "number") {
         total = data.data.total_items
         console.log("Found total_items:", total)
@@ -76,31 +70,25 @@ export function ClientesContent() {
         console.log("Found total_items in meta:", total)
       }
 
-      // If we have total items but no pages, calculate pages
       if (total > 0 && pages === 1) {
         pages = Math.ceil(total / itemsPerPage)
         console.log("Calculated pages from total items:", pages)
       }
 
-      // Fallback: if we have items array, use its length to estimate
       if (pages === 1 && Array.isArray(data.data.items) && data.data.items.length > 0) {
-        // If items.length is exactly itemsPerPage, assume there might be more pages
         if (data.data.items.length === itemsPerPage) {
-          pages = 2 // At least 2 pages
+          pages = 2
           console.log("Estimated at least 2 pages based on items length")
         }
       }
     }
 
-    // Ensure we have at least 1 page
     pages = Math.max(1, pages)
 
     return { totalPages: pages, totalItems: total }
   }
 
-  // Função para verificar se a página atual está vazia e voltar para a anterior se necessário
   const checkEmptyPageAndGoBack = (items: any[], currentPageValue: number) => {
-    // Se estamos em uma página maior que 1 e não há itens, voltar para a página anterior
     if (currentPageValue > 1 && items.length === 0) {
       console.log("Página atual vazia, voltando para a página anterior")
       goToPage(currentPageValue - 1)
@@ -133,11 +121,10 @@ export function ClientesContent() {
       setTotalPages(pages)
       setTotalItems(items_count || items.length)
 
-      // Verificar se a página está vazia e voltar para a anterior se necessário
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar clientes:", error)
-      toast.error("Não foi possível carregar os clientes", { duration: 2000 })
+      toast.error("Não foi possível carregar os clientes", { duration: 1000 })
       return false
     } finally {
       setLoading(false)
@@ -163,19 +150,17 @@ export function ClientesContent() {
 
       if (!response.ok) throw new Error("Falha ao excluir cliente")
 
-      // Após excluir, recarregar os dados da página atual
       const pageChanged = await fetchClientes(currentPage)
 
-      // Se a página não mudou (não estava vazia), mostrar mensagem de sucesso
       if (!pageChanged) {
         toast.success("Cliente excluído com sucesso", {
-          duration: 2000,
+          duration: 1000,
         })
       }
     } catch (error) {
       console.error("Erro ao excluir cliente:", error)
       toast.error("Não foi possível excluir o cliente", {
-        duration: 2000,
+        duration: 1000,
       })
     } finally {
       setLoadingDelete(false)
@@ -204,7 +189,6 @@ export function ClientesContent() {
       )
     : []
 
-  // Use this for displaying the count:
   const displayedItemsCount = filteredClientes.length
 
   const handleNovoClienteSuccess = () => {
@@ -231,57 +215,46 @@ export function ClientesContent() {
     }
   }
 
-  // Generate page numbers for pagination
   const getPageNumbers = () => {
     const pageNumbers = []
-    const maxPageButtons = 3 // Reduzido para melhor visualização em dispositivos móveis
+    const maxPageButtons = 3
 
     if (totalPages <= maxPageButtons) {
-      // If we have fewer pages than the max, show all pages
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i)
       }
     } else {
-      // Always include first page
       pageNumbers.push(1)
 
-      // Calculate start and end of page range around current page
       let start = Math.max(2, currentPage - 1)
       let end = Math.min(totalPages - 1, currentPage + 1)
 
-      // Adjust if we're at the beginning
       if (currentPage <= 2) {
         end = Math.min(totalPages - 1, 3)
       }
 
-      // Adjust if we're at the end
       if (currentPage >= totalPages - 1) {
         start = Math.max(2, totalPages - 2)
       }
 
-      // Add ellipsis after first page if needed
       if (start > 2) {
         pageNumbers.push("...")
       }
 
-      // Add page numbers in the middle
       for (let i = start; i <= end; i++) {
         pageNumbers.push(i)
       }
 
-      // Add ellipsis before last page if needed
       if (end < totalPages - 1) {
         pageNumbers.push("...")
       }
 
-      // Always include last page
       pageNumbers.push(totalPages)
     }
 
     return pageNumbers
   }
 
-  // Função para limpar a busca
   const clearSearch = () => {
     setSearchTerm("")
   }

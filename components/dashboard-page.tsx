@@ -1,6 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Cookies from "js-cookie"
+
 import { Layout } from "@/components/layout"
 import { StatsCards } from "@/components/stats-cards"
 import { RecentInspectionsTable } from "@/components/recent-inspections-table"
@@ -11,6 +14,16 @@ import { FinancialSummary } from "@/components/financial-summary"
 
 export function DashboardPage() {
   const [currentPage, setCurrentPage] = useState("dashboards")
+
+  const router = useRouter()
+
+  useEffect(() => {
+      const token = Cookies.get("access_token")
+      if (!token) {
+        router.push("/users/login")
+      }
+      // Removidas as chamadas de fetch iniciais
+    }, [])
 
   return (
     <Layout currentPage={currentPage} onNavigate={setCurrentPage}>

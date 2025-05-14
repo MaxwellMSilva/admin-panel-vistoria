@@ -6,11 +6,11 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 
-import { Search, Trash2, Pencil, Loader, UserPlus, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react'
+import { Search, Trash2, Pencil, Loader, UserPlus, ChevronLeft, ChevronRight, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import { NovoUsuarioForm } from "./usuarios/page"
+import { NovoUsuarioForm } from "./usuarios/novo-usuario-form"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -123,7 +123,7 @@ export function UsuariosContent() {
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/usuarios?page=${page}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -145,20 +145,27 @@ export function UsuariosContent() {
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar usuários:", error)
-      toast.error("Não foi possível carregar os usuários", { duration: 2000 })
-      
+      toast.error("Não foi possível carregar os usuários", { duration: 1000 })
+
       // Se a API ainda não estiver implementada, usar dados simulados
       const mockUsuarios = [
         { id: "1", nome: "Admin", email: "admin@sistema.com", cargo_id: "1", cargo: "Administrador", status: "Ativo" },
         { id: "2", nome: "João Silva", email: "joao@sistema.com", cargo_id: "2", cargo: "Operador", status: "Ativo" },
         { id: "3", nome: "Maria Santos", email: "maria@sistema.com", cargo_id: "3", cargo: "Gerente", status: "Ativo" },
-        { id: "4", nome: "Pedro Oliveira", email: "pedro@sistema.com", cargo_id: "2", cargo: "Operador", status: "Inativo" },
+        {
+          id: "4",
+          nome: "Pedro Oliveira",
+          email: "pedro@sistema.com",
+          cargo_id: "2",
+          cargo: "Operador",
+          status: "Inativo",
+        },
         { id: "5", nome: "Ana Costa", email: "ana@sistema.com", cargo_id: "4", cargo: "Atendente", status: "Ativo" },
       ]
       setUsuarios(mockUsuarios)
       setTotalPages(1)
       setTotalItems(mockUsuarios.length)
-      
+
       return false
     } finally {
       setLoading(false)
@@ -175,7 +182,7 @@ export function UsuariosContent() {
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/usuarios/${id}`, {
+      const response = await fetch(`http://145.223.121.165:3010/api/v1/usuarios/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -190,18 +197,18 @@ export function UsuariosContent() {
       // Se a página não mudou (não estava vazia), mostrar mensagem de sucesso
       if (!pageChanged) {
         toast.success("Usuário excluído com sucesso", {
-          duration: 2000,
+          duration: 1000,
         })
       }
     } catch (error) {
       console.error("Erro ao excluir usuário:", error)
       toast.error("Não foi possível excluir o usuário", {
-        duration: 2000,
+        duration: 1000,
       })
-      
+
       // Se a API ainda não estiver implementada, remover localmente
-      setUsuarios(prev => prev.filter(usuario => usuario.id !== id))
-      toast.success("Usuário excluído com sucesso", { duration: 2000 })
+      setUsuarios((prev) => prev.filter((usuario) => usuario.id !== id))
+      toast.success("Usuário excluído com sucesso", { duration: 1000 })
     } finally {
       setLoadingDelete(false)
     }
