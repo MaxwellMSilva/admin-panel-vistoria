@@ -16,6 +16,7 @@ import {
   LogOut,
   UserCog,
   BadgeCheck,
+  ClipboardCheck,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Cookies from "js-cookie"
@@ -32,7 +33,6 @@ export function Sidebar({ currentPage, onNavigate, isMobileMenuOpen = false, set
   const pathname = usePathname()
 
   useEffect(() => {
-    // Fechar o menu mobile quando mudar de página
     if (setIsMobileMenuOpen) {
       setIsMobileMenuOpen(false)
     }
@@ -106,6 +106,12 @@ function SidebarContent({ currentPage, onNavigate }: { currentPage?: string; onN
       href: "/veiculos",
       value: "veiculos",
       icon: Car,
+    },
+    {
+      label: "Vistorias",
+      href: "/vistorias",
+      value: "vistorias",
+      icon: ClipboardCheck,
     },
   ]
 
