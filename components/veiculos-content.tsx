@@ -81,7 +81,7 @@ export function VeiculosContent() {
 
       if (pages === 1 && Array.isArray(data.data.items) && data.data.items.length > 0) {
         if (data.data.items.length === itemsPerPage) {
-          pages = 2 
+          pages = 2
           console.log("Estimated at least 2 pages based on items length")
         }
       }
@@ -306,40 +306,71 @@ export function VeiculosContent() {
         </div>
 
         {/* Filtros - Visíveis em todos os dispositivos */}
-        <Card className="mb-6">
-          <CardHeader className="p-4 pb-0">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+        <div className="mb-6 overflow-hidden border rounded-lg shadow-sm">
+          {/* Cabeçalho do filtro com gradiente */}
+          <div className="bg-gradient-to-r from-red-50 to-red-100 border-b px-4 py-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <Filter size={18} className="text-red-500" />
                 Filtros
-              </CardTitle>
+              </h2>
+              {searchTerm && (
+                <Badge
+                  variant="outline"
+                  className="bg-white text-red-600 border-red-200 flex items-center gap-1.5 px-3 py-1"
+                >
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                  Filtro ativo
+                </Badge>
+              )}
             </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="flex flex-col space-y-4">
-              <div className="w-full">
-                <label className="block text-sm font-medium mb-1">Buscar Veículos</label>
+          </div>
+
+          {/* Corpo do filtro */}
+          <div className="bg-gradient-to-b from-white to-gray-50 p-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-gray-700 gap-1.5">
+                  <Search size={14} className="text-gray-400" />
+                  Buscar Veículos
+                </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-gray-400" />
+                  </div>
                   <Input
-                    className="pl-10 w-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                    type="text"
                     placeholder="Buscar por placa ou descrição..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10 py-2 border-gray-300 focus:ring-red-500 focus:border-red-500 block w-full rounded-md"
                   />
                   {searchTerm && (
                     <button
                       onClick={clearSearch}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                     >
-                      <X size={18} />
+                      <X className="h-4 w-4" />
                     </button>
                   )}
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {searchTerm && (
+              <div className="mt-4 pt-3 border-t border-dashed border-gray-200">
+                <div className="flex flex-wrap gap-2">
+                  <Badge className="bg-red-100 text-red-800 hover:bg-red-200 transition-colors px-3 py-1 flex items-center gap-1.5">
+                    <span>{searchTerm}</span>
+                    <button onClick={clearSearch} className="text-red-600 hover:text-red-800">
+                      <X size={14} />
+                    </button>
+                  </Badge>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Conteúdo principal */}
         <Card>

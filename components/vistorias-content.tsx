@@ -385,53 +385,64 @@ export function VistoriasContent() {
         </div>
 
         {/* Filtros - Visíveis em todos os dispositivos */}
-        <Card className="mb-6">
-          <CardHeader className="p-4 pb-0">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+        <div className="mb-6 overflow-hidden border rounded-lg shadow-sm">
+          {/* Cabeçalho do filtro com gradiente */}
+          <div className="bg-gradient-to-r from-red-50 to-red-100 border-b px-4 py-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <Filter size={18} className="text-red-500" />
                 Filtros
-              </CardTitle>
+              </h2>
               {(searchTerm || dataInicio || dataFim || statusFiltro) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                <Badge
+                  variant="outline"
+                  className="bg-white text-red-600 border-red-200 flex items-center gap-1.5 px-3 py-1"
                 >
-                  Limpar filtros
-                </Button>
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                  Filtros ativos
+                </Badge>
               )}
             </div>
-          </CardHeader>
-          <CardContent className="p-4">
+          </div>
+
+          {/* Corpo do filtro */}
+          <div className="bg-gradient-to-b from-white to-gray-50 p-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="w-full">
-                <label className="block text-sm font-medium mb-1">Buscar Vistorias</label>
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-gray-700 gap-1.5">
+                  <Search size={14} className="text-gray-400" />
+                  Buscar Vistorias
+                </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-gray-400" />
+                  </div>
                   <Input
-                    className="pl-10 w-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                    type="text"
                     placeholder="Buscar por placa ou observação..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10 py-2 border-gray-300 focus:ring-red-500 focus:border-red-500 block w-full rounded-md"
                   />
                   {searchTerm && (
                     <button
                       onClick={clearSearch}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                     >
-                      <X size={18} />
+                      <X className="h-4 w-4" />
                     </button>
                   )}
                 </div>
               </div>
 
-              <div className="w-full">
-                <label className="block text-sm font-medium mb-1">Data Inicial</label>
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-gray-700 gap-1.5">
+                  <Calendar size={14} className="text-gray-400" />
+                  Data Inicial
+                </label>
                 <Input
                   type="date"
-                  className="w-full"
+                  className="border-gray-300 focus:ring-red-500 focus:border-red-500 block w-full rounded-md"
                   value={dataInicio ? format(dataInicio, "yyyy-MM-dd") : ""}
                   onChange={(e) => {
                     if (e.target.value) {
@@ -443,11 +454,14 @@ export function VistoriasContent() {
                 />
               </div>
 
-              <div className="w-full">
-                <label className="block text-sm font-medium mb-1">Data Final</label>
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-gray-700 gap-1.5">
+                  <Calendar size={14} className="text-gray-400" />
+                  Data Final
+                </label>
                 <Input
                   type="date"
-                  className="w-full"
+                  className="border-gray-300 focus:ring-red-500 focus:border-red-500 block w-full rounded-md"
                   value={dataFim ? format(dataFim, "yyyy-MM-dd") : ""}
                   onChange={(e) => {
                     if (e.target.value) {
@@ -459,10 +473,13 @@ export function VistoriasContent() {
                 />
               </div>
 
-              <div className="w-full">
-                <label className="block text-sm font-medium mb-1">Status</label>
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-gray-700 gap-1.5">
+                  <Filter size={14} className="text-gray-400" />
+                  Status
+                </label>
                 <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="border-gray-300 focus:ring-red-500 focus:border-red-500 rounded-md">
                     <SelectValue placeholder="Todos os status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -476,8 +493,48 @@ export function VistoriasContent() {
                 </Select>
               </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {(searchTerm || dataInicio || dataFim || statusFiltro) && (
+              <div className="mt-4 pt-3 border-t border-dashed border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap gap-2">
+                    {searchTerm && (
+                      <Badge className="bg-red-100 text-red-800 hover:bg-red-200 transition-colors px-3 py-1 flex items-center gap-1.5">
+                        <span>Busca: {searchTerm}</span>
+                        <button onClick={clearSearch} className="text-red-600 hover:text-red-800">
+                          <X size={14} />
+                        </button>
+                      </Badge>
+                    )}
+                    {dataInicio && (
+                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors px-3 py-1">
+                        De: {format(dataInicio, "dd/MM/yyyy")}
+                      </Badge>
+                    )}
+                    {dataFim && (
+                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors px-3 py-1">
+                        Até: {format(dataFim, "dd/MM/yyyy")}
+                      </Badge>
+                    )}
+                    {statusFiltro && statusFiltro !== "all" && (
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-200 transition-colors px-3 py-1">
+                        {statusOptions.find((s) => s.id.toString() === statusFiltro)?.nome || "Status"}
+                      </Badge>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    Limpar filtros
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Conteúdo principal */}
         <Card>
