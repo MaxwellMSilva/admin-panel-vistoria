@@ -31,7 +31,6 @@ type FormValues = {
   v_fabricante_id: string
   c_cliente_id: string
   v_categoria_id: string
-  c_empresa_id: string
 }
 
 type Modelo = {
@@ -84,7 +83,7 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
     setValue,
     watch,
     formState: { isSubmitting, errors },
-  } = useForm<FormValues>({
+} = useForm<FormValues>({
     defaultValues: {
       placa: veiculo?.placa || "",
       descricao: veiculo?.descricao || "",
@@ -92,8 +91,7 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       v_cor_id: veiculo?.v_cor_id || "",
       v_fabricante_id: veiculo?.v_fabricante_id || "",
       c_cliente_id: veiculo?.c_cliente_id || "",
-      v_categoria_id: veiculo?.v_categoria_id || "",
-      c_empresa_id: "1", // Valor padrão para c_empresa_id
+      v_categoria_id: veiculo?.v_categoria_id || ""
     },
   })
 
@@ -241,7 +239,6 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
     fetchData()
   }, [])
 
-  // Atualizar os textos dos itens selecionados quando os dados forem carregados ou o veículo for carregado
   useEffect(() => {
     if (veiculo) {
       reset({
@@ -251,8 +248,7 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
         v_cor_id: veiculo.v_cor_id,
         v_fabricante_id: veiculo.v_fabricante_id,
         c_cliente_id: veiculo.c_cliente_id,
-        v_categoria_id: veiculo.v_categoria_id || "",
-        c_empresa_id: "1", // Valor padrão para c_empresa_id
+        v_categoria_id: veiculo.v_categoria_id || ""
       })
 
       // Atualizar os textos dos itens selecionados
@@ -273,11 +269,9 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
     }
   }, [veiculo, reset, categorias, modelos, cores, fabricantes, clientes])
 
-  // Observar mudanças nos valores do formulário para atualizar os textos
   const watchedValues = watch()
 
   useEffect(() => {
-    // Atualizar textos quando os valores mudarem
     const categoriaId = watchedValues.v_categoria_id
     if (categoriaId) {
       const categoria = categorias.find((c) => c.id === categoriaId)
@@ -322,8 +316,7 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
         !data.v_cor_id ||
         !data.v_fabricante_id ||
         !data.c_cliente_id ||
-        !data.v_categoria_id ||
-        !data.c_empresa_id
+        !data.v_categoria_id
       ) {
         throw new Error("Todos os campos são obrigatórios")
       }
@@ -339,7 +332,6 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       formDataToSend.append("v_veiculo[v_fabricante_id]", data.v_fabricante_id)
       formDataToSend.append("v_veiculo[c_cliente_id]", data.c_cliente_id)
       formDataToSend.append("v_veiculo[v_categoria_id]", data.v_categoria_id)
-      formDataToSend.append("v_veiculo[c_empresa_id]", data.c_empresa_id)
 
       // Log do FormData (não é possível visualizar diretamente, então vamos listar as entradas)
       for (const pair of formDataToSend.entries()) {
