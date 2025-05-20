@@ -59,7 +59,6 @@ export function VistoriasContent() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
 
-  // Filtros
   const [dataInicio, setDataInicio] = useState<Date | undefined>(undefined)
   const [dataFim, setDataFim] = useState<Date | undefined>(undefined)
   const [statusFiltro, setStatusFiltro] = useState<string>("")
@@ -138,10 +137,8 @@ export function VistoriasContent() {
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
-      // Construir URL com filtros
       let url = `${process.env.NEXT_PUBLIC_API_URL}api/v1/v_vistorias?page=${page}`
 
-      // Adicionar filtros de data se existirem
       if (dataInicio) {
         url += `&data_inicio=${format(dataInicio, "yyyy-MM-dd")}`
       }
@@ -149,7 +146,6 @@ export function VistoriasContent() {
         url += `&data_fim=${format(dataFim, "yyyy-MM-dd")}`
       }
 
-      // Adicionar filtro de status se existir
       if (statusFiltro && statusFiltro !== "all") {
         url += `&v_status_id=${statusFiltro}`
       }
@@ -167,7 +163,6 @@ export function VistoriasContent() {
       const data = await response.json()
       console.log("Vistorias API Response:", data)
 
-      // Verificar a estrutura da resposta e extrair os itens
       let items = []
       if (data.data && Array.isArray(data.data.items)) {
         items = data.data.items
@@ -179,7 +174,6 @@ export function VistoriasContent() {
         items = data
       }
 
-      // Mapear os itens para garantir que eles correspondam à nossa interface Vistoria
       const mappedItems = items.map((item) => ({
         ...item,
         v_veiculo_id: item.v_veiculo_id || (item.v_veiculo ? item.v_veiculo.id : null),

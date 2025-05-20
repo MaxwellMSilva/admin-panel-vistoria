@@ -24,11 +24,6 @@ type Cargo = {
   permissoes?: string[]
 }
 
-// Vamos atualizar o componente CargosContent para ficar mais parecido com a tela de clientes
-
-// Mantenha os imports existentes
-
-// Atualize a função CargosContent para o seguinte formato:
 export function CargosContent() {
   const [cargos, setCargos] = useState<Cargo[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,34 +40,28 @@ export function CargosContent() {
 
   const router = useRouter()
 
-  // Helper function to extract pagination info from API response
   const extractPaginationInfo = (data: any) => {
     console.log("API Response Data:", data)
 
-    // Try different possible structures for pagination info
     let pages = 1
     let total = 0
 
     if (data && data.data) {
-      // Check for total_pages in data.data
       if (typeof data.data.total_pages === "number") {
         pages = data.data.total_pages
         console.log("Found total_pages in data.data:", pages)
       }
 
-      // Check for meta.total_pages
       if (data.data.meta && typeof data.data.meta.total_pages === "number") {
         pages = data.data.meta.total_pages
         console.log("Found total_pages in data.data.meta:", pages)
       }
 
-      // Check for pagination.total_pages
       if (data.data.pagination && typeof data.data.pagination.total_pages === "number") {
         pages = data.data.pagination.total_pages
         console.log("Found total_pages in data.data.pagination:", pages)
       }
 
-      // Check for total_items/count
       if (typeof data.data.total_items === "number") {
         total = data.data.total_items
         console.log("Found total_items:", total)
@@ -84,31 +73,25 @@ export function CargosContent() {
         console.log("Found total_items in meta:", total)
       }
 
-      // If we have total items but no pages, calculate pages
       if (total > 0 && pages === 1) {
         pages = Math.ceil(total / itemsPerPage)
         console.log("Calculated pages from total items:", pages)
       }
 
-      // Fallback: if we have items array, use its length to estimate
       if (pages === 1 && Array.isArray(data.data.items) && data.data.items.length > 0) {
-        // If items.length is exactly itemsPerPage, assume there might be more pages
         if (data.data.items.length === itemsPerPage) {
-          pages = 2 // At least 2 pages
+          pages = 2
           console.log("Estimated at least 2 pages based on items length")
         }
       }
     }
 
-    // Ensure we have at least 1 page
     pages = Math.max(1, pages)
 
     return { totalPages: pages, totalItems: total }
   }
 
-  // Função para verificar se a página atual está vazia e voltar para a anterior se necessário
   const checkEmptyPageAndGoBack = (items: any[], currentPageValue: number) => {
-    // Se estamos em uma página maior que 1 e não há itens, voltar para a página anterior
     if (currentPageValue > 1 && items.length === 0) {
       console.log("Página atual vazia, voltando para a página anterior")
       goToPage(currentPageValue - 1)
@@ -142,7 +125,6 @@ export function CargosContent() {
       setTotalPages(pages)
       setTotalItems(items_count || items.length)
 
-      // Verificar se a página está vazia e voltar para a anterior se necessário
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar cargos:", error)

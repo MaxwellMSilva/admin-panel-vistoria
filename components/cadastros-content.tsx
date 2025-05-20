@@ -17,6 +17,7 @@ import { NovoModeloForm } from "./cadastros/novo-modelo-form"
 import { NovoCorForm } from "./cadastros/novo-cor-form"
 import { NovoFabricanteForm } from "./cadastros/novo-fabricante-form"
 import { NovoCategoriaForm } from "./cadastros/novo-categoria-form"
+import { NovoComponenteForm } from "./cadastros/novo-componente-form"
 
 type Modelo = {
   id: string
@@ -38,11 +39,17 @@ type Categoria = {
   descricao: string
 }
 
+type Componente = {
+  id: string
+  descricao: string
+}
+
 export function CadastrosContent() {
   const [modelos, setModelos] = useState<Modelo[]>([])
   const [cores, setCores] = useState<Cor[]>([])
   const [fabricantes, setFabricante] = useState<Fabricante[]>([])
   const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [componentes, setComponentes] = useState<Componente[]>([])
 
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -54,11 +61,13 @@ export function CadastrosContent() {
   const [isCorDialogOpen, setIsCorDialogOpen] = useState(false)
   const [isFabricanteDialogOpen, setIsFabricanteDialogOpen] = useState(false)
   const [isCategoriaDialogOpen, setIsCategoriaDialogOpen] = useState(false)
+  const [isComponenteDialogOpen, setIsComponenteDialogOpen] = useState(false)
 
   const [selectedModelo, setSelectedModelo] = useState<Modelo | null>(null)
   const [selectedCor, setSelectedCor] = useState<Cor | null>(null)
   const [selectedFabricante, setSelectedFabricante] = useState<Fabricante | null>(null)
   const [selectedCategoria, setSelectedCategoria] = useState<Categoria | null>(null)
+  const [selectedComponente, setSelectedComponente] = useState<Componente | null>(null)
 
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -67,34 +76,28 @@ export function CadastrosContent() {
 
   const router = useRouter()
 
-  // Helper function to extract pagination info from API response
   const extractPaginationInfo = (data: any) => {
     console.log("API Response Data:", data)
 
-    // Try different possible structures for pagination info
     let pages = 1
     let total = 0
 
     if (data && data.data) {
-      // Check for total_pages in data.data
       if (typeof data.data.total_pages === "number") {
         pages = data.data.total_pages
         console.log("Found total_pages in data.data:", pages)
       }
 
-      // Check for meta.total_pages
       if (data.data.meta && typeof data.data.meta.total_pages === "number") {
         pages = data.data.meta.total_pages
         console.log("Found total_pages in data.data.meta:", pages)
       }
 
-      // Check for pagination.total_pages
       if (data.data.pagination && typeof data.data.pagination.total_pages === "number") {
         pages = data.data.pagination.total_pages
         console.log("Found total_pages in data.data.pagination:", pages)
       }
 
-      // Check for total_items/count
       if (typeof data.data.total_items === "number") {
         total = data.data.total_items
         console.log("Found total_items:", total)
@@ -106,31 +109,25 @@ export function CadastrosContent() {
         console.log("Found total_items in meta:", total)
       }
 
-      // If we have total items but no pages, calculate pages
       if (total > 0 && pages === 1) {
         pages = Math.ceil(total / itemsPerPage)
         console.log("Calculated pages from total items:", pages)
       }
 
-      // Fallback: if we have items array, use its length to estimate
       if (pages === 1 && Array.isArray(data.data.items) && data.data.items.length > 0) {
-        // If items.length is exactly itemsPerPage, assume there might be more pages
         if (data.data.items.length === itemsPerPage) {
-          pages = 2 // At least 2 pages
+          pages = 2
           console.log("Estimated at least 2 pages based on items length")
         }
       }
     }
 
-    // Ensure we have at least 1 page
     pages = Math.max(1, pages)
 
     return { totalPages: pages, totalItems: total }
   }
 
-  // Função para verificar se a página atual está vazia e voltar para a anterior se necessário
   const checkEmptyPageAndGoBack = (items: any[], currentPageValue: number) => {
-    // Se estamos em uma página maior que 1 e não há itens, voltar para a página anterior
     if (currentPageValue > 1 && items.length === 0) {
       console.log("Página atual vazia, voltando para a página anterior")
       goToPage(currentPageValue - 1)
@@ -161,7 +158,6 @@ export function CadastrosContent() {
       setTotalPages(pages)
       setTotalItems(items_count)
 
-      // Verificar se a página está vazia e voltar para a anterior se necessário
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar modelos:", error)
@@ -201,7 +197,6 @@ export function CadastrosContent() {
       setTotalPages(pages)
       setTotalItems(items_count)
 
-      // Verificar se a página está vazia e voltar para a anterior se necessário
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar cores:", error)
@@ -241,7 +236,6 @@ export function CadastrosContent() {
       setTotalPages(pages)
       setTotalItems(items_count)
 
-      // Verificar se a página está vazia e voltar para a anterior se necessário
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar fabricantes:", error)
@@ -281,7 +275,6 @@ export function CadastrosContent() {
       setTotalPages(pages)
       setTotalItems(items_count)
 
-      // Verificar se a página está vazia e voltar para a anterior se necessário
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
       console.error("Erro ao buscar categorias:", error)
@@ -297,6 +290,45 @@ export function CadastrosContent() {
     fetchCategorias()
     setIsCategoriaDialogOpen(false)
     setSelectedCategoria(null)
+  }
+
+  const fetchComponentes = async (page = 1) => {
+    try {
+      setLoadingPagination(true)
+      const token = Cookies.get("access_token")
+      if (!token) throw new Error("Token não encontrado")
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_componentes?page=${page}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json()
+      console.log("Componentes API Response:", data)
+
+      const items = Array.isArray(data.data.items) ? data.data.items : []
+      setComponentes(items)
+
+      const { totalPages: pages, totalItems: items_count } = extractPaginationInfo(data)
+      setTotalPages(pages)
+      setTotalItems(items_count)
+
+      return checkEmptyPageAndGoBack(items, page)
+    } catch (error) {
+      console.error("Erro ao buscar componentes:", error)
+      toast.error("Erro ao buscar componentes. Tente novamente.", { duration: 1000 })
+      return false
+    } finally {
+      setLoading(false)
+      setLoadingPagination(false)
+    }
+  }
+
+  const handleNovoComponenteSuccess = () => {
+    fetchComponentes()
+    setIsComponenteDialogOpen(false)
+    setSelectedComponente(null)
   }
 
   const handleDelete = async (id: string, endpoint: string, entityName: string) => {
@@ -317,7 +349,6 @@ export function CadastrosContent() {
 
       if (!response.ok) throw new Error(`Falha ao excluir ${entityName}`)
 
-      // Após excluir, recarregar os dados da página atual
       let pageChanged = false
       switch (endpoint) {
         case "v_modelos":
@@ -332,9 +363,11 @@ export function CadastrosContent() {
         case "v_categorias":
           pageChanged = await fetchCategorias(currentPage)
           break
+        case "v_componentes":
+          pageChanged = await fetchComponentes(currentPage)
+          break
       }
 
-      // Se a página não mudou (não estava vazia), mostrar mensagem de sucesso
       if (!pageChanged) {
         toast.success(`${entityName} excluído(a) com sucesso`, { duration: 1000})
       }
@@ -364,6 +397,10 @@ export function CadastrosContent() {
         setSelectedCategoria(item)
         setIsCategoriaDialogOpen(true)
         break
+      case "componentes":
+        setSelectedComponente(item)
+        setIsComponenteDialogOpen(true)
+        break
     }
   }
 
@@ -372,7 +409,8 @@ export function CadastrosContent() {
     if (!isCorDialogOpen) setSelectedCor(null)
     if (!isFabricanteDialogOpen) setSelectedFabricante(null)
     if (!isCategoriaDialogOpen) setSelectedCategoria(null)
-  }, [isModeloDialogOpen, isCorDialogOpen, isFabricanteDialogOpen, isCategoriaDialogOpen])
+    if (!isComponenteDialogOpen) setSelectedComponente(null)
+  }, [isModeloDialogOpen, isCorDialogOpen, isFabricanteDialogOpen, isCategoriaDialogOpen, isComponenteDialogOpen])
 
   const handleNovoClick = (type: string) => {
     switch (type) {
@@ -396,6 +434,11 @@ export function CadastrosContent() {
         setIsCategoriaDialogOpen(true)
         if (!filterType) setFilterType("categorias")
         break
+      case "componente":
+        setSelectedComponente(null)
+        setIsComponenteDialogOpen(true)
+        if (!filterType) setFilterType("componentes")
+        break
     }
   }
 
@@ -404,7 +447,6 @@ export function CadastrosContent() {
     if (!token) {
       router.push("/users/login")
     }
-    // Removidas as chamadas de fetch iniciais
   }, [])
 
   useEffect(() => {
@@ -423,6 +465,9 @@ export function CadastrosContent() {
           break
         case "categorias":
           fetchCategorias(1)
+          break
+        case "componentes":
+          fetchComponentes(1)
           break
       }
     }
@@ -445,24 +490,31 @@ export function CadastrosContent() {
     (cat) => cat.id.toString().includes(searchTerm) || cat.descricao.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  // Define currentItems based on the current filter type
-  const currentItems = searchTerm
-    ? filterType === "modelos"
-      ? filteredModelos
-      : filterType === "cores"
-        ? filteredCores
-        : filterType === "fabricantes"
-          ? filteredFabricantes
-          : filteredCategorias
-    : filterType === "modelos"
-      ? modelos
-      : filterType === "cores"
-        ? cores
-        : filterType === "fabricantes"
-          ? fabricantes
-          : categorias
+  const filteredComponentes = componentes.filter(
+    (cat) => cat.id.toString().includes(searchTerm) || cat.descricao.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
 
-  // Use this for displaying the count:
+const currentItems = searchTerm
+  ? filterType === "modelos"
+    ? filteredModelos
+    : filterType === "cores"
+      ? filteredCores
+      : filterType === "fabricantes"
+        ? filteredFabricantes
+        : filterType === "componentes"
+          ? filteredComponentes
+          : filteredCategorias
+  : filterType === "modelos"
+    ? modelos
+    : filterType === "cores"
+      ? cores
+      : filterType === "fabricantes"
+        ? fabricantes
+        : filterType === "componentes"
+          ? componentes
+          : categorias;
+
+
   const displayedItemsCount = currentItems.length
 
   const getEndpoint = (type: string) => {
@@ -493,6 +545,9 @@ export function CadastrosContent() {
         case "categorias":
           fetchCategorias(page)
           break
+        case "componentes":
+          fetchComponentes(page)
+          break
       }
     }
   }
@@ -503,57 +558,46 @@ export function CadastrosContent() {
     )
   }, [currentPage, itemsPerPage, totalPages, totalItems])
 
-  // Generate page numbers for pagination
   const getPageNumbers = () => {
     const pageNumbers = []
-    const maxPageButtons = 3 // Reduzido para melhor visualização em dispositivos móveis
+    const maxPageButtons = 3
 
     if (totalPages <= maxPageButtons) {
-      // If we have fewer pages than the max, show all pages
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i)
       }
     } else {
-      // Always include first page
       pageNumbers.push(1)
 
-      // Calculate start and end of page range around current page
       let start = Math.max(2, currentPage - 1)
       let end = Math.min(totalPages - 1, currentPage + 1)
 
-      // Adjust if we're at the beginning
       if (currentPage <= 2) {
         end = Math.min(totalPages - 1, 3)
       }
 
-      // Adjust if we're at the end
       if (currentPage >= totalPages - 1) {
         start = Math.max(2, totalPages - 2)
       }
 
-      // Add ellipsis after first page if needed
       if (start > 2) {
         pageNumbers.push("...")
       }
 
-      // Add page numbers in the middle
       for (let i = start; i <= end; i++) {
         pageNumbers.push(i)
       }
 
-      // Add ellipsis before last page if needed
       if (end < totalPages - 1) {
         pageNumbers.push("...")
       }
 
-      // Always include last page
       pageNumbers.push(totalPages)
     }
 
     return pageNumbers
   }
 
-  // Função para limpar a busca
   const clearSearch = () => {
     setSearchTerm("")
   }
@@ -583,6 +627,7 @@ export function CadastrosContent() {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent className="w-48 rounded-md shadow-lg bg-white border p-1">
+
               <DropdownMenuItem>
                 <Button
                   variant="ghost"
@@ -622,6 +667,17 @@ export function CadastrosContent() {
                   Nova Categoria
                 </Button>
               </DropdownMenuItem>
+
+              <DropdownMenuItem>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
+                  onClick={() => handleNovoClick("componente")}
+                >
+                  Novo Componente
+                </Button>
+              </DropdownMenuItem>
+
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -713,6 +769,28 @@ export function CadastrosContent() {
           </SheetContent>
         </Sheet>
 
+        <Sheet open={isComponenteDialogOpen} onOpenChange={setIsComponenteDialogOpen}>
+          <SheetContent className="max-h-screen overflow-auto p-4 sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle className="text-xl font-semibold">
+                {selectedComponente ? "Editar Componente" : "Novo Componente"}
+              </SheetTitle>
+              <SheetDescription className="text-sm">
+                {selectedComponente ? "Edite os dados do componente abaixo." : "Cadastre um novo componente abaixo."}
+              </SheetDescription>
+            </SheetHeader>
+
+            <NovoComponenteForm
+              onSuccess={handleNovoComponenteSuccess}
+              onCancel={() => {
+                setIsComponenteDialogOpen(false)
+                setSelectedComponente(null)
+              }}
+              categoria={selectedComponente}
+            />
+          </SheetContent>
+        </Sheet>
+
         {/* Filtros - Visíveis em todos os dispositivos */}
         <div className="mb-6 bg-white border rounded-lg p-4 shadow-sm">
           <div className="flex justify-between items-center mb-2">
@@ -735,6 +813,7 @@ export function CadastrosContent() {
                 <option value="cores">Cor</option>
                 <option value="fabricantes">Fabricante</option>
                 <option value="categorias">Categoria</option>
+                <option value="componentes">Componente</option>
               </select>
             </div>
 
