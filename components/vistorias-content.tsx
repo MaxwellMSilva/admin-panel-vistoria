@@ -12,38 +12,68 @@ import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { format, parseISO, parse } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
+// Atualizar o tipo Vistoria para corresponder à estrutura real da API
 type Vistoria = {
-  id: string
+  id: number | string
   data_entrada: string
   previsao_entrega: string
   data_entrega: string | null
   observacao: string
-  v_status_id: number
+  created_at?: string
+  v_status_id?: number
   v_status: {
     id: number
-    nome: string
-    cor: string
+    descricao: string
+    created_by?: string
+    updated_by?: string
+    deleted_at?: null
+    created_at?: string
+    updated_at?: string
   }
-  v_veiculo_id: number
   v_veiculo: {
     id: number
     placa: string
-    modelo: string
+    descricao: string
+    created_at?: string
   }
-  v_categoria_id: number
   v_categoria: {
     id: number
-    nome: string
+    descricao: string
+    created_at?: string
   }
-  v_servico_ids: number[]
-  v_servicos: Array<{
-    id: number
-    nome: string
+  v_servicos_vistorias?: Array<{
+    c_empresa_id?: number
+    v_servico: {
+      id: number
+      descricao: string
+      c_empresa_id?: number
+      valor?: number | null
+    }
+    created_at?: string
   }>
+  c_empresa?: {
+    id: number
+    razao_social: string
+    cnpj: string
+    telefone: string
+    cep: string
+    rua: string
+    bairro: string
+    numero_residencial: number
+    created_at?: string
+  }
+  v_vistorias_imagens?: any[]
+}
+
+// Tipo para os status da tabela v_status
+type StatusOption = {
+  id: number
+  descricao: string
+  cor: string
 }
 
 export function VistoriasContent() {
@@ -62,21 +92,79 @@ export function VistoriasContent() {
   const [dataInicio, setDataInicio] = useState<Date | undefined>(undefined)
   const [dataFim, setDataFim] = useState<Date | undefined>(undefined)
   const [statusFiltro, setStatusFiltro] = useState<string>("")
+  const [statusOptions, setStatusOptions] = useState<StatusOption[]>([])
 
   const router = useRouter()
 
-  const statusOptions = [
-    { id: 1, nome: "Aguardando", cor: "bg-yellow-500" },
-    { id: 2, nome: "Em andamento", cor: "bg-blue-500" },
-    { id: 3, nome: "Concluído", cor: "bg-green-500" },
-    { id: 4, nome: "Cancelado", cor: "bg-red-500" },
-  ]
+  // Mapeamento de cores para os status
+  const statusColors: Record<string, string> = {
+    PENDENTE: "bg-yellow-500",
+    "EM ANDAMENTO": "bg-blue-500",
+    CONCLUÍDO: "bg-green-500",
+    CANCELADO: "bg-red-500",
+    // Fallbacks para outros possíveis status
+    AGUARDANDO: "bg-yellow-500",
+    FINALIZADO: "bg-green-500",
+    REJEITADO: "bg-red-500",
+  }
 
-  const getStatusBadge = (statusId: number) => {
-    const status = statusOptions.find((s) => s.id === statusId)
+  // Função para buscar os status disponíveis da API
+  const fetchStatusOptions = async () => {
+    try {
+      const token = Cookies.get("access_token")
+      if (!token) throw new Error("Token não encontrado")
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_status`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) throw new Error("Falha ao buscar status")
+
+      const data = await response.json()
+      console.log("Status API Response:", data)
+
+      let items = []
+      if (data.data && Array.isArray(data.data.items)) {
+        items = data.data.items
+      } else if (Array.isArray(data.data)) {
+        items = data.data
+      } else if (data && Array.isArray(data.items)) {
+        items = data.items
+      } else if (Array.isArray(data)) {
+        items = data
+      }
+
+      // Mapear os status para incluir cores
+      const mappedStatus = items.map((status: any) => ({
+        id: status.id,
+        descricao: status.descricao,
+        cor: statusColors[status.descricao] || "bg-gray-500",
+      }))
+
+      console.log("Status mapeados:", mappedStatus)
+      setStatusOptions(mappedStatus)
+    } catch (error) {
+      console.error("Erro ao buscar status:", error)
+      // Usar status padrão em caso de falha
+      setStatusOptions([
+        { id: 1, descricao: "PENDENTE", cor: "bg-yellow-500" },
+        { id: 2, descricao: "EM ANDAMENTO", cor: "bg-blue-500" },
+        { id: 3, descricao: "CONCLUÍDO", cor: "bg-green-500" },
+        { id: 4, descricao: "CANCELADO", cor: "bg-red-500" },
+      ])
+    }
+  }
+
+  // Atualizar a função getStatusBadge para usar o campo descricao
+  const getStatusBadge = (status: any) => {
     if (!status) return <Badge>Desconhecido</Badge>
 
-    return <Badge className={`${status.cor} text-white border-none`}>{status.nome}</Badge>
+    const statusDescricao = status.descricao || "Desconhecido"
+    const statusColor = statusColors[statusDescricao] || "bg-gray-500"
+
+    return <Badge className={`${statusColor} text-white border-none`}>{statusDescricao}</Badge>
   }
 
   const extractPaginationInfo = (data: any) => {
@@ -86,39 +174,26 @@ export function VistoriasContent() {
     let total = 0
 
     if (data && data.data) {
-      if (typeof data.data.total_pages === "number") {
+      if (data.data.pagination && typeof data.data.pagination.total_pages === "number") {
+        pages = data.data.pagination.total_pages
+      } else if (typeof data.data.total_pages === "number") {
         pages = data.data.total_pages
-      }
-
-      if (data.data.meta && typeof data.data.meta.total_pages === "number") {
+      } else if (data.data.meta && typeof data.data.meta.total_pages === "number") {
         pages = data.data.meta.total_pages
       }
 
-      if (data.data.pagination && typeof data.data.pagination.total_pages === "number") {
-        pages = data.data.pagination.total_pages
-      }
-
-      if (typeof data.data.total_items === "number") {
+      if (data.data.pagination && typeof data.data.pagination.total_count === "number") {
+        total = data.data.pagination.total_count
+      } else if (typeof data.data.total_items === "number") {
         total = data.data.total_items
       } else if (typeof data.data.count === "number") {
         total = data.data.count
       } else if (data.data.meta && typeof data.data.meta.total_items === "number") {
         total = data.data.meta.total_items
       }
-
-      if (total > 0 && pages === 1) {
-        pages = Math.ceil(total / itemsPerPage)
-      }
-
-      if (pages === 1 && Array.isArray(data.data.items) && data.data.items.length > 0) {
-        if (data.data.items.length === itemsPerPage) {
-          pages = 2
-        }
-      }
     }
 
     pages = Math.max(1, pages)
-
     return { totalPages: pages, totalItems: total }
   }
 
@@ -131,6 +206,7 @@ export function VistoriasContent() {
     return false
   }
 
+  // Atualizar a função fetchVistorias para mapear corretamente os dados da API
   const fetchVistorias = async (page = 1) => {
     try {
       setLoadingPagination(true)
@@ -139,15 +215,22 @@ export function VistoriasContent() {
 
       let url = `${process.env.NEXT_PUBLIC_API_URL}api/v1/v_vistorias?page=${page}`
 
-      if (dataInicio) {
-        url += `&data_inicio=${format(dataInicio, "yyyy-MM-dd")}`
-      }
-      if (dataFim) {
-        url += `&data_fim=${format(dataFim, "yyyy-MM-dd")}`
-      }
+      // Remover a filtragem por data
+      // if (dataInicio) {
+      //   url += `&data_inicio=${format(dataInicio, "yyyy-MM-dd")}`
+      // }
+      // if (dataFim) {
+      //   url += `&data_fim=${format(dataFim, "yyyy-MM-dd")}`
+      // }
 
+      // Aplicar filtro por status
       if (statusFiltro && statusFiltro !== "all") {
         url += `&v_status_id=${statusFiltro}`
+      }
+
+      // Aplicar filtro de busca por texto
+      if (searchTerm) {
+        url += `&search=${encodeURIComponent(searchTerm)}`
       }
 
       console.log("Fetching URL:", url)
@@ -163,6 +246,7 @@ export function VistoriasContent() {
       const data = await response.json()
       console.log("Vistorias API Response:", data)
 
+      // Extrair os itens da resposta da API
       let items = []
       if (data.data && Array.isArray(data.data.items)) {
         items = data.data.items
@@ -174,18 +258,13 @@ export function VistoriasContent() {
         items = data
       }
 
-      const mappedItems = items.map((item) => ({
-        ...item,
-        v_veiculo_id: item.v_veiculo_id || (item.v_veiculo ? item.v_veiculo.id : null),
-        v_categoria_id: item.v_categoria_id || (item.v_categoria ? item.v_categoria.id : null),
-        v_servico_ids: item.v_servico_ids || (item.v_servicos ? item.v_servicos.map((s) => s.id) : []),
-      }))
+      console.log("Itens extraídos:", items)
+      setVistorias(items)
 
-      setVistorias(mappedItems)
-
-      const { totalPages: pages, totalItems: items_count } = extractPaginationInfo(data)
-      setTotalPages(pages)
-      setTotalItems(items_count || items.length)
+      // Extrair informações de paginação
+      const { totalPages, totalItems } = extractPaginationInfo(data)
+      setTotalPages(totalPages)
+      setTotalItems(totalItems)
 
       return checkEmptyPageAndGoBack(items, page)
     } catch (error) {
@@ -203,14 +282,16 @@ export function VistoriasContent() {
     if (!token) {
       router.push("/users/login")
     } else {
-      fetchVistorias(1)
+      // Buscar os status disponíveis e depois as vistorias
+      fetchStatusOptions().then(() => fetchVistorias(1))
     }
   }, [])
 
+  // Modificar o useEffect para remover a dependência de dataInicio e dataFim
   useEffect(() => {
     setCurrentPage(1)
     fetchVistorias(1)
-  }, [searchTerm, dataInicio, dataFim, statusFiltro])
+  }, [searchTerm, statusFiltro]) // Remover dataInicio e dataFim
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Não definido"
@@ -221,11 +302,35 @@ export function VistoriasContent() {
     }
   }
 
+  // Melhorar a função de filtro de texto para buscar em mais campos
+  // Atualizar a função filteredVistorias para buscar em mais campos:
+
+  // Atualizar a função filteredVistorias para usar a estrutura correta
   const filteredVistorias = Array.isArray(vistorias)
     ? vistorias.filter(
         (vistoria) =>
-          vistoria.v_veiculo?.placa?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          vistoria.observacao?.toLowerCase().includes(searchTerm.toLowerCase()),
+          // Se não houver termo de busca, retorna true (mostra todos)
+          !searchTerm ||
+          // Busca na placa do veículo
+          vistoria.v_veiculo?.placa
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          // Busca na descrição do veículo
+          vistoria.v_veiculo?.descricao
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          // Busca na observação
+          vistoria.observacao
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          // Busca na categoria
+          vistoria.v_categoria?.descricao
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          // Busca nos serviços
+          vistoria.v_servicos_vistorias?.some((sv) =>
+            sv.v_servico?.descricao?.toLowerCase().includes(searchTerm.toLowerCase()),
+          ),
       )
     : []
 
@@ -287,91 +392,21 @@ export function VistoriasContent() {
     setSearchTerm("")
   }
 
+  // Modificar a função clearFilters para não limpar as datas
   const clearFilters = () => {
-    setDataInicio(undefined)
-    setDataFim(undefined)
+    // Não limpar as datas
+    // setDataInicio(undefined)
+    // setDataFim(undefined)
     setStatusFiltro("")
     setSearchTerm("")
   }
 
+  // Atualizar a função viewDetails para passar o objeto vistoria completo
   const viewDetails = (vistoria: Vistoria) => {
+    console.log("Visualizando detalhes da vistoria:", vistoria)
     setSelectedVistoria(vistoria)
     setIsDetailsOpen(true)
   }
-
-  // Dados de exemplo para desenvolvimento
-  const mockVistorias: Vistoria[] = [
-    {
-      id: "1",
-      data_entrada: "2025-05-03T15:00:00",
-      previsao_entrega: "2025-05-05T18:00:00",
-      data_entrega: "2025-05-04T16:00:00",
-      observacao: "Veículo chegou com arranhões no para-choque",
-      v_status_id: 1,
-      v_status: {
-        id: 1,
-        nome: "Aguardando",
-        cor: "yellow",
-      },
-      v_veiculo_id: 2,
-      v_veiculo: {
-        id: 2,
-        placa: "ABC1234",
-        modelo: "Toyota Corolla",
-      },
-      v_categoria_id: 1,
-      v_categoria: {
-        id: 1,
-        nome: "Revisão Completa",
-      },
-      v_servico_ids: [1, 2],
-      v_servicos: [
-        {
-          id: 1,
-          nome: "Troca de óleo",
-        },
-        {
-          id: 2,
-          nome: "Verificação de freios",
-        },
-      ],
-    },
-    {
-      id: "2",
-      data_entrada: "2025-05-03T15:00:00",
-      previsao_entrega: "2025-05-05T18:00:00",
-      data_entrega: "2025-05-04T16:00:00",
-      observacao: "Cliente solicitou verificação do sistema de ar condicionado",
-      v_status_id: 3,
-      v_status: {
-        id: 3,
-        nome: "Concluído",
-        cor: "green",
-      },
-      v_veiculo_id: 2,
-      v_veiculo: {
-        id: 2,
-        placa: "XYZ5678",
-        modelo: "Honda Civic",
-      },
-      v_categoria_id: 1,
-      v_categoria: {
-        id: 1,
-        nome: "Manutenção Preventiva",
-      },
-      v_servico_ids: [1, 2],
-      v_servicos: [
-        {
-          id: 1,
-          nome: "Verificação do ar condicionado",
-        },
-        {
-          id: 2,
-          nome: "Alinhamento e balanceamento",
-        },
-      ],
-    },
-  ]
 
   return (
     <Layout currentPage={currentPageNav} onNavigate={setCurrentPageNav}>
@@ -393,7 +428,7 @@ export function VistoriasContent() {
                 <Filter size={18} className="text-red-500" />
                 Filtros
               </h2>
-              {(searchTerm || dataInicio || dataFim || statusFiltro) && (
+              {(searchTerm || statusFiltro) && (
                 <Badge
                   variant="outline"
                   className="bg-white text-red-600 border-red-200 flex items-center gap-1.5 px-3 py-1"
@@ -442,15 +477,10 @@ export function VistoriasContent() {
                 </label>
                 <Input
                   type="date"
-                  className="border-gray-300 focus:ring-red-500 focus:border-red-500 block w-full rounded-md"
+                  className="border-gray-300 focus:ring-red-500 focus:border-red-500 block w-full rounded-md bg-gray-100 cursor-not-allowed"
                   value={dataInicio ? format(dataInicio, "yyyy-MM-dd") : ""}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      setDataInicio(parse(e.target.value, "yyyy-MM-dd", new Date()))
-                    } else {
-                      setDataInicio(undefined)
-                    }
-                  }}
+                  disabled={true}
+                  title="Filtro por data desativado"
                 />
               </div>
 
@@ -461,15 +491,10 @@ export function VistoriasContent() {
                 </label>
                 <Input
                   type="date"
-                  className="border-gray-300 focus:ring-red-500 focus:border-red-500 block w-full rounded-md"
+                  className="border-gray-300 focus:ring-red-500 focus:border-red-500 block w-full rounded-md bg-gray-100 cursor-not-allowed"
                   value={dataFim ? format(dataFim, "yyyy-MM-dd") : ""}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      setDataFim(parse(e.target.value, "yyyy-MM-dd", new Date()))
-                    } else {
-                      setDataFim(undefined)
-                    }
-                  }}
+                  disabled={true}
+                  title="Filtro por data desativado"
                 />
               </div>
 
@@ -486,7 +511,7 @@ export function VistoriasContent() {
                     <SelectItem value="all">Todos os status</SelectItem>
                     {statusOptions.map((status) => (
                       <SelectItem key={status.id} value={status.id.toString()}>
-                        {status.nome}
+                        {status.descricao}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -494,7 +519,7 @@ export function VistoriasContent() {
               </div>
             </div>
 
-            {(searchTerm || dataInicio || dataFim || statusFiltro) && (
+            {(searchTerm || statusFiltro) && (
               <div className="mt-4 pt-3 border-t border-dashed border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-wrap gap-2">
@@ -506,19 +531,10 @@ export function VistoriasContent() {
                         </button>
                       </Badge>
                     )}
-                    {dataInicio && (
-                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors px-3 py-1">
-                        De: {format(dataInicio, "dd/MM/yyyy")}
-                      </Badge>
-                    )}
-                    {dataFim && (
-                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors px-3 py-1">
-                        Até: {format(dataFim, "dd/MM/yyyy")}
-                      </Badge>
-                    )}
+                    {/* Remover os badges de data */}
                     {statusFiltro && statusFiltro !== "all" && (
                       <Badge className="bg-green-100 text-green-800 hover:bg-green-200 transition-colors px-3 py-1">
-                        {statusOptions.find((s) => s.id.toString() === statusFiltro)?.nome || "Status"}
+                        {statusOptions.find((s) => s.id.toString() === statusFiltro)?.descricao || "Status"}
                       </Badge>
                     )}
                   </div>
@@ -647,7 +663,7 @@ export function VistoriasContent() {
                               {vistoria.v_veiculo?.placa}
                             </Badge>
                           </div>
-                          <div>{getStatusBadge(vistoria.v_status_id)}</div>
+                          <div>{getStatusBadge(vistoria.v_status)}</div>
                         </div>
                         <div className="mt-3 space-y-2 text-sm text-gray-600">
                           <div className="flex items-center gap-2">
@@ -711,7 +727,7 @@ export function VistoriasContent() {
                             <td className="py-3 px-4 text-gray-700">{vistoria.v_veiculo?.placa}</td>
                             <td className="py-3 px-4 text-gray-700">{formatDate(vistoria.data_entrada)}</td>
                             <td className="py-3 px-4 text-gray-700">{formatDate(vistoria.previsao_entrega)}</td>
-                            <td className="py-3 px-4 text-center">{getStatusBadge(vistoria.v_status_id)}</td>
+                            <td className="py-3 px-4 text-center">{getStatusBadge(vistoria.v_status)}</td>
                             <td className="py-3 px-4">
                               <div className="flex justify-end gap-2">
                                 <Button
@@ -784,7 +800,7 @@ export function VistoriasContent() {
               <div className="mt-6 space-y-6">
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium text-gray-500">Veículo</h3>
-                  <p className="text-lg font-medium">{selectedVistoria.v_veiculo?.modelo}</p>
+                  <p className="text-lg font-medium">{selectedVistoria.v_veiculo?.descricao}</p>
                   <Badge variant="outline" className="mt-1 bg-gray-50">
                     {selectedVistoria.v_veiculo?.placa}
                   </Badge>
@@ -792,12 +808,12 @@ export function VistoriasContent() {
 
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                  <div>{getStatusBadge(selectedVistoria.v_status_id)}</div>
+                  <div>{getStatusBadge(selectedVistoria.v_status)}</div>
                 </div>
 
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium text-gray-500">Categoria</h3>
-                  <p>{selectedVistoria.v_categoria?.nome || "Não definida"}</p>
+                  <p>{selectedVistoria.v_categoria?.descricao || "Não definida"}</p>
                 </div>
 
                 <div className="space-y-2">
@@ -820,13 +836,13 @@ export function VistoriasContent() {
                   </div>
                 </div>
 
-                {selectedVistoria.v_servicos && selectedVistoria.v_servicos.length > 0 && (
+                {selectedVistoria.v_servicos_vistorias && selectedVistoria.v_servicos_vistorias.length > 0 && (
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-gray-500">Serviços</h3>
                     <div className="flex flex-wrap gap-2">
-                      {selectedVistoria.v_servicos.map((servico) => (
-                        <Badge key={servico.id} variant="secondary">
-                          {servico.nome}
+                      {selectedVistoria.v_servicos_vistorias.map((servicoVistoria, index) => (
+                        <Badge key={index} variant="secondary">
+                          {servicoVistoria.v_servico?.descricao}
                         </Badge>
                       ))}
                     </div>
