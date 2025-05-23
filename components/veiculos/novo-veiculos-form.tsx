@@ -19,7 +19,6 @@ type VeiculoFormProps = {
     v_cor_id: string
     v_fabricante_id: string
     c_cliente_id: string
-    v_categoria_id?: string
   }
 }
 
@@ -30,7 +29,6 @@ type FormValues = {
   v_cor_id: string
   v_fabricante_id: string
   c_cliente_id: string
-  v_categoria_id: string
 }
 
 type Modelo = {
@@ -48,11 +46,6 @@ type Fabricante = {
   descricao: string
 }
 
-type Categoria = {
-  id: string
-  descricao: string
-}
-
 type Cliente = {
   id: string
   nome_completo: string
@@ -63,17 +56,13 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
   const [modelos, setModelos] = useState<Modelo[]>([])
   const [cores, setCores] = useState<Cor[]>([])
   const [fabricantes, setFabricantes] = useState<Fabricante[]>([])
-  const [categorias, setCategorias] = useState<Categoria[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
+  const [dadosCarregados, setDadosCarregados] = useState(false)
   const [debugInfo, setDebugInfo] = useState<string>("")
 
-  // Estados para armazenar os textos dos itens selecionados
-  const [categoriaTexto, setCategoriaTexto] = useState<string>("")
-  const [modeloTexto, setModeloTexto] = useState<string>("")
-  const [corTexto, setCorTexto] = useState<string>("")
-  const [fabricanteTexto, setFabricanteTexto] = useState<string>("")
-  const [clienteTexto, setClienteTexto] = useState<string>("")
+  // Referência para controlar a inicialização do formulário
+  const formInitialized = useRef(false)
 
   const {
     register,
@@ -83,26 +72,42 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
     setValue,
     watch,
     formState: { isSubmitting, errors },
-} = useForm<FormValues>({
-    defaultValues: {
-      placa: veiculo?.placa || "",
-      descricao: veiculo?.descricao || "",
-      v_modelo_id: veiculo?.v_modelo_id || "",
-      v_cor_id: veiculo?.v_cor_id || "",
-      v_fabricante_id: veiculo?.v_fabricante_id || "",
-      c_cliente_id: veiculo?.c_cliente_id || "",
-      v_categoria_id: veiculo?.v_categoria_id || ""
-    },
-  })
+  } = useForm<FormValues>()
 
   const formRef = useRef<HTMLFormElement>(null)
+
+  // Função para buscar veículo específico por ID
+  const fetchVeiculoById = async (veiculoId: string) => {
+    try {
+      const token = Cookies.get("access_token")
+      if (!token) throw new Error("Token não encontrado")
+
+      console.log("Buscando veículo por ID:", veiculoId)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_veiculos/${veiculoId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) throw new Error("Falha ao buscar veículo")
+
+      const data = await response.json()
+      console.log("Veículo específico recebido:", data)
+
+      return data.data || data
+    } catch (error) {
+      console.error("Erro ao buscar veículo:", error)
+      toast.error("Não foi possível carregar os dados do veículo", { duration: 2000 })
+      return null
+    }
+  }
 
   const fetchModelos = async () => {
     try {
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_modelos?page=1`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_modelos?page=all`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -112,7 +117,16 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
 
       const data = await response.json()
       console.log("Modelos recebidos:", data)
-      const modelosArray = Array.isArray(data.data.items) ? data.data.items : []
+
+      let modelosArray: Modelo[] = []
+      if (data.success && Array.isArray(data.data?.items)) {
+        modelosArray = data.data.items
+      } else if (Array.isArray(data.data)) {
+        modelosArray = data.data
+      } else if (Array.isArray(data)) {
+        modelosArray = data
+      }
+
       console.log("Modelos processados:", modelosArray)
       setModelos(modelosArray)
     } catch (error) {
@@ -126,7 +140,7 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_cores?page=1`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_cores?page=all`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -136,7 +150,16 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
 
       const data = await response.json()
       console.log("Cores recebidas:", data)
-      const coresArray = Array.isArray(data.data.items) ? data.data.items : []
+
+      let coresArray: Cor[] = []
+      if (data.success && Array.isArray(data.data?.items)) {
+        coresArray = data.data.items
+      } else if (Array.isArray(data.data)) {
+        coresArray = data.data
+      } else if (Array.isArray(data)) {
+        coresArray = data
+      }
+
       console.log("Cores processadas:", coresArray)
       setCores(coresArray)
     } catch (error) {
@@ -150,7 +173,7 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_fabricantes?page=1`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_fabricantes?page=all`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -160,7 +183,16 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
 
       const data = await response.json()
       console.log("Fabricantes recebidos:", data)
-      const fabricantesArray = Array.isArray(data.data.items) ? data.data.items : []
+
+      let fabricantesArray: Fabricante[] = []
+      if (data.success && Array.isArray(data.data?.items)) {
+        fabricantesArray = data.data.items
+      } else if (Array.isArray(data.data)) {
+        fabricantesArray = data.data
+      } else if (Array.isArray(data)) {
+        fabricantesArray = data
+      }
+
       console.log("Fabricantes processados:", fabricantesArray)
       setFabricantes(fabricantesArray)
     } catch (error) {
@@ -169,41 +201,12 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
     }
   }
 
-  const fetchCategorias = async () => {
-    try {
-      const token = Cookies.get("access_token")
-      if (!token) throw new Error("Token não encontrado")
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_categorias?page=1`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (!response.ok) throw new Error("Falha ao buscar categorias")
-
-      const data = await response.json()
-      console.log("Dados de categorias recebidos:", data)
-
-      if (Array.isArray(data.data.items)) {
-        setCategorias(data.data.items)
-        console.log("Categorias carregadas:", data.data.items.length)
-      } else {
-        console.error("Formato inesperado de dados de categorias:", data)
-        setCategorias([])
-      }
-    } catch (error) {
-      console.error("Erro ao buscar categorias:", error)
-      toast.error("Não foi possível carregar as categorias", { duration: 2000 })
-    }
-  }
-
   const fetchClientes = async () => {
     try {
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/c_clientes?page=1`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/c_clientes?page=all`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -212,22 +215,33 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       if (!response.ok) throw new Error("Falha ao buscar clientes")
 
       const data = await response.json()
-      const clientesArray = Array.isArray(data.data.items) ? data.data.items : []
+      console.log("Clientes recebidos:", data)
+
+      let clientesArray: Cliente[] = []
+      if (data.success && Array.isArray(data.data?.items)) {
+        clientesArray = data.data.items
+      } else if (Array.isArray(data.data)) {
+        clientesArray = data.data
+      } else if (Array.isArray(data)) {
+        clientesArray = data
+      }
+
+      console.log("Clientes processados:", clientesArray)
       setClientes(clientesArray)
     } catch (error) {
       console.error("Erro ao buscar clientes:", error)
       toast.error("Não foi possível carregar os clientes", { duration: 2000 })
-    } finally {
-      setLoading(false)
     }
   }
 
+  // Carregar todos os dados necessários
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       try {
-        await Promise.all([fetchModelos(), fetchCores(), fetchFabricantes(), fetchCategorias(), fetchClientes()])
+        await Promise.all([fetchModelos(), fetchCores(), fetchFabricantes(), fetchClientes()])
         console.log("Todos os dados carregados")
+        setDadosCarregados(true)
       } catch (error) {
         console.error("Erro ao carregar dados:", error)
         toast.error("Ocorreu um erro ao carregar os dados", { duration: 2000 })
@@ -239,69 +253,87 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
     fetchData()
   }, [])
 
+  // Inicializar o formulário quando os dados forem carregados e o veículo estiver disponível
   useEffect(() => {
-    if (veiculo) {
-      reset({
-        placa: veiculo.placa,
-        descricao: veiculo.descricao,
-        v_modelo_id: veiculo.v_modelo_id,
-        v_cor_id: veiculo.v_cor_id,
-        v_fabricante_id: veiculo.v_fabricante_id,
-        c_cliente_id: veiculo.c_cliente_id,
-        v_categoria_id: veiculo.v_categoria_id || ""
-      })
+    const initializeForm = async () => {
+      if (dadosCarregados && veiculo && !formInitialized.current) {
+        let veiculoData = veiculo
 
-      // Atualizar os textos dos itens selecionados
-      const categoria = categorias.find((c) => c.id === veiculo.v_categoria_id)
-      if (categoria) setCategoriaTexto(categoria.descricao)
+        // Se temos apenas o ID, buscar os dados completos
+        if (veiculo.id && (!veiculo.placa)) {
+          console.log("Buscando dados completos do veículo...")
+          const dadosCompletos = await fetchVeiculoById(veiculo.id)
+          if (dadosCompletos) {
+            veiculoData = dadosCompletos
+          }
+        }
 
-      const modelo = modelos.find((m) => m.id === veiculo.v_modelo_id)
-      if (modelo) setModeloTexto(modelo.descricao)
+        const formData = {
+          placa: veiculoData.placa || "",
+          descricao: veiculoData.descricao || "",
+          v_modelo_id: veiculoData.v_modelo_id?.toString() || "",
+          v_cor_id: veiculoData.v_cor_id?.toString() || "",
+          v_fabricante_id: veiculoData.v_fabricante_id?.toString() || "",
+          c_cliente_id: veiculoData.c_cliente_id?.toString() || "",
+        }
 
-      const cor = cores.find((c) => c.id === veiculo.v_cor_id)
-      if (cor) setCorTexto(cor.descricao)
+        console.log("Dados do formulário a serem definidos:", formData)
+        reset(formData)
 
-      const fabricante = fabricantes.find((f) => f.id === veiculo.v_fabricante_id)
-      if (fabricante) setFabricanteTexto(fabricante.descricao)
+        // Definir valores com timeout para garantir que o DOM esteja pronto
+        setTimeout(() => {
+          // Modelo
+          const modeloIdString = veiculoData.v_modelo_id?.toString()
+          if (modeloIdString) {
+            const modeloEncontrado = modelos.find((m) => m.id.toString() === modeloIdString)
+            if (modeloEncontrado) {
+              setValue("v_modelo_id", modeloIdString)
+              console.log("✅ Modelo definido:", modeloEncontrado.descricao)
+            }
+          }
 
-      const cliente = clientes.find((c) => c.id === veiculo.c_cliente_id)
-      if (cliente) setClienteTexto(`${cliente.nome_completo} - ${cliente.cpf_cnpj}`)
+          // Cor
+          const corIdString = veiculoData.v_cor_id?.toString()
+          if (corIdString) {
+            const corEncontrada = cores.find((c) => c.id.toString() === corIdString)
+            if (corEncontrada) {
+              setValue("v_cor_id", corIdString)
+              console.log("✅ Cor definida:", corEncontrada.descricao)
+            }
+          }
+
+          // Fabricante
+          const fabricanteIdString = veiculoData.v_fabricante_id?.toString()
+          if (fabricanteIdString) {
+            const fabricanteEncontrado = fabricantes.find((f) => f.id.toString() === fabricanteIdString)
+            if (fabricanteEncontrado) {
+              setValue("v_fabricante_id", fabricanteIdString)
+              console.log("✅ Fabricante definido:", fabricanteEncontrado.descricao)
+            }
+          }
+
+          // Cliente
+          const clienteIdString = veiculoData.c_cliente_id?.toString()
+          if (clienteIdString) {
+            const clienteEncontrado = clientes.find((c) => c.id.toString() === clienteIdString)
+            if (clienteEncontrado) {
+              setValue("c_cliente_id", clienteIdString)
+              console.log("✅ Cliente definido:", clienteEncontrado.nome_completo)
+            }
+          }
+
+          formInitialized.current = true
+        }, 300)
+      }
     }
-  }, [veiculo, reset, categorias, modelos, cores, fabricantes, clientes])
 
-  const watchedValues = watch()
+    initializeForm()
+  }, [veiculo, dadosCarregados, modelos, cores, fabricantes, clientes, reset, setValue])
 
+  // Resetar o estado de inicialização quando o veículo mudar
   useEffect(() => {
-    const categoriaId = watchedValues.v_categoria_id
-    if (categoriaId) {
-      const categoria = categorias.find((c) => c.id === categoriaId)
-      if (categoria) setCategoriaTexto(categoria.descricao)
-    }
-
-    const modeloId = watchedValues.v_modelo_id
-    if (modeloId) {
-      const modelo = modelos.find((m) => m.id === modeloId)
-      if (modelo) setModeloTexto(modelo.descricao)
-    }
-
-    const corId = watchedValues.v_cor_id
-    if (corId) {
-      const cor = cores.find((c) => c.id === corId)
-      if (cor) setCorTexto(cor.descricao)
-    }
-
-    const fabricanteId = watchedValues.v_fabricante_id
-    if (fabricanteId) {
-      const fabricante = fabricantes.find((f) => f.id === fabricanteId)
-      if (fabricante) setFabricanteTexto(fabricante.descricao)
-    }
-
-    const clienteId = watchedValues.c_cliente_id
-    if (clienteId) {
-      const cliente = clientes.find((c) => c.id === clienteId)
-      if (cliente) setClienteTexto(`${cliente.nome_completo} - ${cliente.cpf_cnpj}`)
-    }
-  }, [watchedValues, categorias, modelos, cores, fabricantes, clientes])
+    formInitialized.current = false
+  }, [veiculo?.id])
 
   const onSubmit = async (data: FormValues) => {
     try {
@@ -315,8 +347,7 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
         !data.v_modelo_id ||
         !data.v_cor_id ||
         !data.v_fabricante_id ||
-        !data.c_cliente_id ||
-        !data.v_categoria_id
+        !data.c_cliente_id
       ) {
         throw new Error("Todos os campos são obrigatórios")
       }
@@ -331,9 +362,9 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       formDataToSend.append("v_veiculo[v_cor_id]", data.v_cor_id)
       formDataToSend.append("v_veiculo[v_fabricante_id]", data.v_fabricante_id)
       formDataToSend.append("v_veiculo[c_cliente_id]", data.c_cliente_id)
-      formDataToSend.append("v_veiculo[v_categoria_id]", data.v_categoria_id)
 
-      // Log do FormData (não é possível visualizar diretamente, então vamos listar as entradas)
+      // Log do FormData
+      console.log("Dados a serem enviados:")
       for (const pair of formDataToSend.entries()) {
         console.log(`${pair[0]}: ${pair[1]}`)
       }
@@ -342,61 +373,20 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
         ? `${process.env.NEXT_PUBLIC_API_URL}api/v1/v_veiculos/${veiculo.id}`
         : `${process.env.NEXT_PUBLIC_API_URL}api/v1/v_veiculos`
 
-      console.log("URL da requisição:", url)
-      console.log("Método:", veiculo ? "PUT" : "POST")
+      const method = veiculo ? "PUT" : "POST"
+      console.log(`Enviando requisição ${method} para ${url}`)
 
       const response = await fetch(url, {
-        method: veiculo ? "PUT" : "POST",
+        method,
         body: formDataToSend,
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
 
-      // Log da resposta
-      console.log("Status da resposta:", response.status)
-      console.log("Status text:", response.statusText)
-
-      const responseText = await response.text()
-      console.log("Resposta completa:", responseText)
-
-      let responseData
-      try {
-        responseData = JSON.parse(responseText)
-        console.log("Resposta como JSON:", responseData)
-      } catch (e) {
-        console.log("Não foi possível parsear a resposta como JSON")
-      }
-
       if (!response.ok) {
-        // Tentar extrair mensagem de erro mais específica
-        let errorMessage = `Falha ao processar veículo (${response.status})`
-        if (responseData && responseData.error) {
-          errorMessage = responseData.error
-        } else if (responseData && responseData.errors) {
-          // Formatar erros de validação - corrigido para lidar com diferentes formatos
-          try {
-            const errorEntries = Object.entries(responseData.errors)
-            const formattedErrors = errorEntries
-              .map(([field, messages]) => {
-                // Verificar se messages é um array, string ou outro formato
-                if (Array.isArray(messages)) {
-                  return `${field}: ${messages.join(", ")}`
-                } else if (typeof messages === "string") {
-                  return `${field}: ${messages}`
-                } else {
-                  return `${field}: erro de validação`
-                }
-              })
-              .join("; ")
-
-            errorMessage = `Erros de validação: ${formattedErrors}`
-          } catch (e) {
-            console.error("Erro ao formatar mensagens de erro:", e)
-            errorMessage = "Erro de validação nos dados enviados"
-          }
-        }
-        throw new Error(errorMessage)
+        const errorData = await response.json()
+        throw new Error(errorData?.error || "Falha ao processar veículo")
       }
 
       toast.success(veiculo ? "Veículo atualizado com sucesso" : "Veículo criado com sucesso", {
@@ -404,6 +394,7 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       })
       onSuccess()
       reset()
+      formInitialized.current = false
     } catch (error: any) {
       console.error("Erro ao processar veículo:", error)
       toast.error(error.message || "Erro ao processar veículo", { duration: 2000 })
@@ -446,58 +437,6 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       </div>
 
       <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="v_categoria_id" className="font-bold mb-2">
-          Categoria:
-        </Label>
-        <div className="relative">
-          <Controller
-            name="v_categoria_id"
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <select
-                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
-                value={field.value}
-                onChange={(e) => {
-                  field.onChange(e.target.value)
-                  const categoria = categorias.find((c) => c.id === e.target.value)
-                  if (categoria) setCategoriaTexto(categoria.descricao)
-                }}
-              >
-                <option value="" disabled>
-                  Selecione uma categoria
-                </option>
-                {categorias.map((categoria) => (
-                  <option key={categoria.id} value={categoria.id}>
-                    {categoria.descricao}
-                  </option>
-                ))}
-              </select>
-            )}
-          />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-        </div>
-        {errors.v_categoria_id && <span className="text-sm text-red-500">Categoria é obrigatória</span>}
-        {categorias.length === 0 && !loading && (
-          <span className="text-sm text-amber-500">Nenhuma categoria encontrada. Cadastre uma categoria primeiro.</span>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1 mb-4">
         <Label htmlFor="v_modelo_id" className="font-bold mb-2">
           Modelo:
         </Label>
@@ -509,18 +448,17 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
             render={({ field }) => (
               <select
                 className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
-                value={field.value}
+                value={field.value?.toString() || ""}
                 onChange={(e) => {
                   field.onChange(e.target.value)
-                  const modelo = modelos.find((m) => m.id === e.target.value)
-                  if (modelo) setModeloTexto(modelo.descricao)
+                  console.log("Modelo selecionado:", e.target.value)
                 }}
               >
                 <option value="" disabled>
                   Selecione um modelo
                 </option>
                 {modelos.map((modelo) => (
-                  <option key={modelo.id} value={modelo.id}>
+                  <option key={modelo.id} value={modelo.id.toString()}>
                     {modelo.descricao}
                   </option>
                 ))}
@@ -561,18 +499,17 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
             render={({ field }) => (
               <select
                 className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
-                value={field.value}
+                value={field.value?.toString() || ""}
                 onChange={(e) => {
                   field.onChange(e.target.value)
-                  const cor = cores.find((c) => c.id === e.target.value)
-                  if (cor) setCorTexto(cor.descricao)
+                  console.log("Cor selecionada:", e.target.value)
                 }}
               >
                 <option value="" disabled>
                   Selecione uma cor
                 </option>
                 {cores.map((cor) => (
-                  <option key={cor.id} value={cor.id}>
+                  <option key={cor.id} value={cor.id.toString()}>
                     {cor.descricao}
                   </option>
                 ))}
@@ -613,18 +550,17 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
             render={({ field }) => (
               <select
                 className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
-                value={field.value}
+                value={field.value?.toString() || ""}
                 onChange={(e) => {
                   field.onChange(e.target.value)
-                  const fabricante = fabricantes.find((f) => f.id === e.target.value)
-                  if (fabricante) setFabricanteTexto(fabricante.descricao)
+                  console.log("Fabricante selecionado:", e.target.value)
                 }}
               >
                 <option value="" disabled>
                   Selecione um fabricante
                 </option>
                 {fabricantes.map((fabricante) => (
-                  <option key={fabricante.id} value={fabricante.id}>
+                  <option key={fabricante.id} value={fabricante.id.toString()}>
                     {fabricante.descricao}
                   </option>
                 ))}
@@ -665,18 +601,17 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
             render={({ field }) => (
               <select
                 className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
-                value={field.value}
+                value={field.value?.toString() || ""}
                 onChange={(e) => {
                   field.onChange(e.target.value)
-                  const cliente = clientes.find((c) => c.id === e.target.value)
-                  if (cliente) setClienteTexto(`${cliente.nome_completo} - ${cliente.cpf_cnpj}`)
+                  console.log("Cliente selecionado:", e.target.value)
                 }}
               >
                 <option value="" disabled>
                   Selecione um cliente
                 </option>
                 {clientes.map((cliente) => (
-                  <option key={cliente.id} value={cliente.id}>
+                  <option key={cliente.id} value={cliente.id.toString()}>
                     {cliente.nome_completo} - {cliente.cpf_cnpj}
                   </option>
                 ))}
@@ -711,13 +646,23 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
           variant="outline"
           onClick={() => {
             reset()
+            formInitialized.current = false
             onCancel()
           }}
         >
           Cancelar
         </Button>
         <Button type="submit" disabled={isSubmitting} className="bg-red-500 hover:bg-red-600">
-          {isSubmitting ? "Salvando..." : veiculo ? "Atualizar" : "Salvar"}
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Salvando...
+            </>
+          ) : veiculo ? (
+            "Atualizar"
+          ) : (
+            "Salvar"
+          )}
         </Button>
       </div>
     </form>
