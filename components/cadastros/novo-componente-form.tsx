@@ -251,13 +251,13 @@ export function NovoComponenteForm({ onSuccess, onCancel, componente }: Componen
 
       <div className="flex flex-col gap-1 mb-4">
         <Label htmlFor="v_categoria_componente_id" className="font-bold mb-2">
-          Categoria:
+          Categoria do Componente:
         </Label>
         <div className="relative">
           <Controller
             name="v_categoria_componente_id"
             control={control}
-            rules={{ required: "Categoria é obrigatória" }}
+            rules={{ required: "Categoria do componente é obrigatória" }}
             render={({ field }) => (
               <select
                 className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
@@ -272,7 +272,7 @@ export function NovoComponenteForm({ onSuccess, onCancel, componente }: Componen
                 }}
               >
                 <option value="" disabled>
-                  Selecione uma categoria
+                  Selecione uma categoria de componente
                 </option>
                 {categorias.map((categoria) => (
                   <option key={categoria.id} value={categoria.id}>

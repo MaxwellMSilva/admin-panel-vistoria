@@ -1,0 +1,8 @@
+PARA ARRUMAR:
+
+    Editar da página de cadastro de veículos
+    Filtros da página de listar vistorias
+    CRUD de serviços
+    Cadastro/Acesso ao sistema pela landing page
+    CRUD de cargos
+    CRUD de funcionarios
