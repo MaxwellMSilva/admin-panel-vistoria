@@ -2,10 +2,8 @@
 
 import { Layout } from "@/components/layout"
 import { useState, useEffect } from "react"
-
 import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
-
 import { Search, Trash2, Pencil, Loader, Car, ChevronLeft, ChevronRight, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,17 +31,58 @@ export function VeiculosContent() {
   const [selectedVeiculo, setSelectedVeiculo] = useState<Veiculo | null>(null)
   const [loadingDelete, setLoadingDelete] = useState(false)
   const [loadingPagination, setLoadingPagination] = useState(false)
-
+  const [loadingVeiculoDetails, setLoadingVeiculoDetails] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
-
   const router = useRouter()
+
+  // Função para buscar detalhes completos de um veículo
+  const fetchVeiculoDetails = async (veiculoId: string): Promise<Veiculo | null> => {
+    try {
+      setLoadingVeiculoDetails(true)
+      const token = Cookies.get("access_token")
+      if (!token) throw new Error("Token não encontrado")
+
+      console.log("Buscando detalhes do veículo:", veiculoId)
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_veiculos/${veiculoId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) throw new Error("Falha ao buscar detalhes do veículo")
+
+      const data = await response.json()
+      console.log("Detalhes do veículo recebidos:", data)
+
+      // Extrair os dados do veículo da resposta
+      const veiculoData = data.data || data
+
+      return {
+        id: veiculoData.id,
+        placa: veiculoData.placa || "",
+        descricao: veiculoData.descricao || "",
+        v_modelo_id: veiculoData.v_modelo_id?.toString() || "",
+        v_cor_id: veiculoData.v_cor_id?.toString() || "",
+        v_fabricante_id: veiculoData.v_fabricante_id?.toString() || "",
+        c_cliente_id: veiculoData.c_cliente_id?.toString() || "",
+      }
+    } catch (error) {
+      console.error("Erro ao buscar detalhes do veículo:", error)
+      toast.error("Não foi possível carregar os detalhes do veículo", {
+        duration: 2000,
+      })
+      return null
+    } finally {
+      setLoadingVeiculoDetails(false)
+    }
+  }
 
   const extractPaginationInfo = (data: any) => {
     console.log("API Response Data:", data)
-
     let pages = 1
     let total = 0
 
@@ -52,12 +91,10 @@ export function VeiculosContent() {
         pages = data.data.total_pages
         console.log("Found total_pages in data.data:", pages)
       }
-
       if (data.data.meta && typeof data.data.meta.total_pages === "number") {
         pages = data.data.meta.total_pages
         console.log("Found total_pages in data.data.meta:", pages)
       }
-
       if (data.data.pagination && typeof data.data.pagination.total_pages === "number") {
         pages = data.data.pagination.total_pages
         console.log("Found total_pages in data.data.pagination:", pages)
@@ -88,7 +125,6 @@ export function VeiculosContent() {
     }
 
     pages = Math.max(1, pages)
-
     return { totalPages: pages, totalItems: total }
   }
 
@@ -142,7 +178,6 @@ export function VeiculosContent() {
     if (!confirm("Tem certeza que deseja excluir este veículo?")) return
 
     setLoadingDelete(true)
-
     try {
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
@@ -157,7 +192,6 @@ export function VeiculosContent() {
       if (!response.ok) throw new Error("Falha ao excluir veículo")
 
       const pageChanged = await fetchVeiculos(currentPage)
-
       if (!pageChanged) {
         toast.success("Veículo excluído com sucesso", {
           duration: 1000,
@@ -170,6 +204,24 @@ export function VeiculosContent() {
       })
     } finally {
       setLoadingDelete(false)
+    }
+  }
+
+  // Função para lidar com a edição de veículo
+  const handleEditVeiculo = async (veiculo: Veiculo) => {
+    console.log("Iniciando edição do veículo:", veiculo.id)
+
+    // Buscar os detalhes completos do veículo
+    const veiculoCompleto = await fetchVeiculoDetails(veiculo.id)
+
+    if (veiculoCompleto) {
+      console.log("Veículo completo carregado:", veiculoCompleto)
+      setSelectedVeiculo(veiculoCompleto)
+      setIsDialogOpen(true)
+    } else {
+      toast.error("Não foi possível carregar os dados do veículo para edição", {
+        duration: 2000,
+      })
     }
   }
 
@@ -213,7 +265,6 @@ export function VeiculosContent() {
 
   const goToPage = (page: number) => {
     console.log(`Attempting to go to page ${page}, total pages: ${totalPages}`)
-
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
       setLoadingPagination(true)
@@ -238,7 +289,6 @@ export function VeiculosContent() {
       if (currentPage <= 2) {
         end = Math.min(totalPages - 1, 3)
       }
-
       if (currentPage >= totalPages - 1) {
         start = Math.max(2, totalPages - 2)
       }
@@ -274,7 +324,6 @@ export function VeiculosContent() {
             <h1 className="text-2xl font-bold text-gray-800">Veículos</h1>
             <p className="text-sm text-gray-500 mt-1">Gerencie seus veículos</p>
           </div>
-
           <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <SheetTrigger asChild>
               <Button className="bg-red-500 hover:bg-red-600 text-white font-medium rounded-md flex items-center gap-2 transition-colors w-full sm:w-auto">
@@ -282,7 +331,6 @@ export function VeiculosContent() {
                 <span>Novo Veículo</span>
               </Button>
             </SheetTrigger>
-
             <SheetContent className="max-h-screen overflow-auto p-4 sm:max-w-md">
               <SheetHeader>
                 <SheetTitle className="text-xl font-semibold">
@@ -293,14 +341,24 @@ export function VeiculosContent() {
                 </SheetDescription>
               </SheetHeader>
 
-              <NovoVeiculoForm
-                onSuccess={handleNovoVeiculoSuccess}
-                onCancel={() => {
-                  setIsDialogOpen(false)
-                  setSelectedVeiculo(null)
-                }}
-                veiculo={selectedVeiculo}
-              />
+              {/* Loading state para quando está carregando detalhes do veículo */}
+              {loadingVeiculoDetails ? (
+                <div className="flex justify-center items-center p-8">
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader className="h-8 w-8 animate-spin text-red-500" />
+                    <span className="text-sm text-gray-600">Carregando dados do veículo...</span>
+                  </div>
+                </div>
+              ) : (
+                <NovoVeiculoForm
+                  onSuccess={handleNovoVeiculoSuccess}
+                  onCancel={() => {
+                    setIsDialogOpen(false)
+                    setSelectedVeiculo(null)
+                  }}
+                  veiculo={selectedVeiculo}
+                />
+              )}
             </SheetContent>
           </Sheet>
         </div>
@@ -325,7 +383,6 @@ export function VeiculosContent() {
               )}
             </div>
           </div>
-
           {/* Corpo do filtro */}
           <div className="bg-gradient-to-b from-white to-gray-50 p-4">
             <div className="grid grid-cols-1 gap-4">
@@ -356,7 +413,6 @@ export function VeiculosContent() {
                 </div>
               </div>
             </div>
-
             {searchTerm && (
               <div className="mt-4 pt-3 border-t border-dashed border-gray-200">
                 <div className="flex flex-wrap gap-2">
@@ -394,7 +450,6 @@ export function VeiculosContent() {
                     <div className="text-sm font-medium text-red-700 bg-white px-3 py-1 rounded-full shadow-sm border border-red-200">
                       Página {currentPage} de {totalPages}
                     </div>
-
                     {/* Numbered pagination - Visível apenas em telas maiores */}
                     <div className="hidden md:flex items-center gap-2 flex-wrap justify-center">
                       {getPageNumbers().map((page, index) =>
@@ -420,7 +475,6 @@ export function VeiculosContent() {
                         ),
                       )}
                     </div>
-
                     {/* Botões de navegação - Sempre visíveis */}
                     <div className="flex items-center gap-3">
                       <Button
@@ -435,7 +489,6 @@ export function VeiculosContent() {
                         )}
                         <span className="hidden sm:inline">Anterior</span>
                       </Button>
-
                       <Button
                         onClick={() => goToPage(currentPage + 1)}
                         disabled={currentPage >= totalPages || loadingPagination}
@@ -488,13 +541,15 @@ export function VeiculosContent() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => {
-                                setSelectedVeiculo(veiculo)
-                                setIsDialogOpen(true)
-                              }}
+                              onClick={() => handleEditVeiculo(veiculo)}
+                              disabled={loadingVeiculoDetails}
                               className="hover:bg-blue-50 transition-colors h-8 w-8"
                             >
-                              <Pencil className="w-4 h-4 text-blue-500" />
+                              {loadingVeiculoDetails ? (
+                                <Loader className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Pencil className="w-4 h-4 text-yellow-500" />
+                              )}
                             </Button>
                             <Button
                               variant="ghost"
@@ -548,13 +603,15 @@ export function VeiculosContent() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => {
-                                    setSelectedVeiculo(veiculo)
-                                    setIsDialogOpen(true)
-                                  }}
+                                  onClick={() => handleEditVeiculo(veiculo)}
+                                  disabled={loadingVeiculoDetails}
                                   className="hover:bg-blue-50 transition-colors"
                                 >
-                                  <Pencil className="w-4 h-4 text-blue-500" />
+                                  {loadingVeiculoDetails ? (
+                                    <Loader className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Pencil className="w-4 h-4 text-yellow-500" />
+                                  )}
                                 </Button>
                                 <Button
                                   variant="ghost"

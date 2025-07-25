@@ -532,7 +532,7 @@ export function CargosContent() {
                               }}
                               className="hover:bg-blue-50 transition-colors h-8 w-8"
                             >
-                              <Pencil className="w-4 h-4 text-blue-500" />
+                              <Pencil className="w-4 h-4 text-yellow-500" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -610,7 +610,7 @@ export function CargosContent() {
                                   }}
                                   className="hover:bg-blue-50 transition-colors"
                                 >
-                                  <Pencil className="w-4 h-4 text-blue-500" />
+                                  <Pencil className="w-4 h-4 text-yellow-500" />
                                 </Button>
                                 <Button
                                   variant="ghost"

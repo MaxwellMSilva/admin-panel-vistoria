@@ -883,11 +883,11 @@ export function CadastrosContent() {
                     value={filterType}
                   >
                     <option value="">Selecione um tipo</option>
-                    <option value="modelos">Modelo</option>
-                    <option value="cores">Cor</option>
-                    <option value="fabricantes">Fabricante</option>
-                    <option value="categorias">Categoria</option>
-                    <option value="componentes">Componente</option>
+                    <option value="modelos">Modelos</option>
+                    <option value="cores">Cores</option>
+                    <option value="fabricantes">Fabricantes</option>
+                    <option value="categorias">Categorias</option>
+                    <option value="componentes">Componentes</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                     <svg
@@ -1112,7 +1112,7 @@ export function CadastrosContent() {
                                     onClick={() => handleEdit(item, filterType)}
                                     className="hover:bg-blue-50 transition-colors"
                                   >
-                                    <Pencil className="w-4 h-4 text-blue-500" />
+                                    <Pencil className="w-4 h-4 text-yellow-500" />
                                   </Button>
                                   <Button
                                     variant="ghost"
@@ -1156,7 +1156,7 @@ export function CadastrosContent() {
                                   onClick={() => handleEdit(item, filterType)}
                                   className="h-8 w-8 hover:bg-blue-50 transition-colors"
                                 >
-                                  <Pencil className="w-4 h-4 text-blue-500" />
+                                  <Pencil className="w-4 h-4 text-yellow-500" />
                                 </Button>
                                 <Button
                                   variant="ghost"

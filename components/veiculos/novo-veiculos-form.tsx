@@ -1,4 +1,5 @@
 "use client"
+
 import { useRef, useEffect, useState } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { toast } from "sonner"
@@ -19,7 +20,7 @@ type VeiculoFormProps = {
     v_cor_id: string
     v_fabricante_id: string
     c_cliente_id: string
-  }
+  } | null
 }
 
 type FormValues = {
@@ -72,35 +73,18 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
     setValue,
     watch,
     formState: { isSubmitting, errors },
-  } = useForm<FormValues>()
+  } = useForm<FormValues>({
+    defaultValues: {
+      placa: "",
+      descricao: "",
+      v_modelo_id: "",
+      v_cor_id: "",
+      v_fabricante_id: "",
+      c_cliente_id: "",
+    },
+  })
 
   const formRef = useRef<HTMLFormElement>(null)
-
-  // Função para buscar veículo específico por ID
-  const fetchVeiculoById = async (veiculoId: string) => {
-    try {
-      const token = Cookies.get("access_token")
-      if (!token) throw new Error("Token não encontrado")
-
-      console.log("Buscando veículo por ID:", veiculoId)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/v_veiculos/${veiculoId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (!response.ok) throw new Error("Falha ao buscar veículo")
-
-      const data = await response.json()
-      console.log("Veículo específico recebido:", data)
-
-      return data.data || data
-    } catch (error) {
-      console.error("Erro ao buscar veículo:", error)
-      toast.error("Não foi possível carregar os dados do veículo", { duration: 2000 })
-      return null
-    }
-  }
 
   const fetchModelos = async () => {
     try {
@@ -255,75 +239,51 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
 
   // Inicializar o formulário quando os dados forem carregados e o veículo estiver disponível
   useEffect(() => {
-    const initializeForm = async () => {
-      if (dadosCarregados && veiculo && !formInitialized.current) {
-        let veiculoData = veiculo
+    const initializeForm = () => {
+      if (dadosCarregados && !formInitialized.current) {
+        if (veiculo) {
+          console.log("Inicializando formulário com dados do veículo:", veiculo)
 
-        // Se temos apenas o ID, buscar os dados completos
-        if (veiculo.id && (!veiculo.placa)) {
-          console.log("Buscando dados completos do veículo...")
-          const dadosCompletos = await fetchVeiculoById(veiculo.id)
-          if (dadosCompletos) {
-            veiculoData = dadosCompletos
-          }
-        }
-
-        const formData = {
-          placa: veiculoData.placa || "",
-          descricao: veiculoData.descricao || "",
-          v_modelo_id: veiculoData.v_modelo_id?.toString() || "",
-          v_cor_id: veiculoData.v_cor_id?.toString() || "",
-          v_fabricante_id: veiculoData.v_fabricante_id?.toString() || "",
-          c_cliente_id: veiculoData.c_cliente_id?.toString() || "",
-        }
-
-        console.log("Dados do formulário a serem definidos:", formData)
-        reset(formData)
-
-        // Definir valores com timeout para garantir que o DOM esteja pronto
-        setTimeout(() => {
-          // Modelo
-          const modeloIdString = veiculoData.v_modelo_id?.toString()
-          if (modeloIdString) {
-            const modeloEncontrado = modelos.find((m) => m.id.toString() === modeloIdString)
-            if (modeloEncontrado) {
-              setValue("v_modelo_id", modeloIdString)
-              console.log("✅ Modelo definido:", modeloEncontrado.descricao)
-            }
+          const formData = {
+            placa: veiculo.placa || "",
+            descricao: veiculo.descricao || "",
+            v_modelo_id: veiculo.v_modelo_id?.toString() || "",
+            v_cor_id: veiculo.v_cor_id?.toString() || "",
+            v_fabricante_id: veiculo.v_fabricante_id?.toString() || "",
+            c_cliente_id: veiculo.c_cliente_id?.toString() || "",
           }
 
-          // Cor
-          const corIdString = veiculoData.v_cor_id?.toString()
-          if (corIdString) {
-            const corEncontrada = cores.find((c) => c.id.toString() === corIdString)
-            if (corEncontrada) {
-              setValue("v_cor_id", corIdString)
-              console.log("✅ Cor definida:", corEncontrada.descricao)
-            }
-          }
+          console.log("Dados do formulário a serem definidos:", formData)
 
-          // Fabricante
-          const fabricanteIdString = veiculoData.v_fabricante_id?.toString()
-          if (fabricanteIdString) {
-            const fabricanteEncontrado = fabricantes.find((f) => f.id.toString() === fabricanteIdString)
-            if (fabricanteEncontrado) {
-              setValue("v_fabricante_id", fabricanteIdString)
-              console.log("✅ Fabricante definido:", fabricanteEncontrado.descricao)
-            }
-          }
+          // Reset com os dados do veículo
+          reset(formData)
 
-          // Cliente
-          const clienteIdString = veiculoData.c_cliente_id?.toString()
-          if (clienteIdString) {
-            const clienteEncontrado = clientes.find((c) => c.id.toString() === clienteIdString)
-            if (clienteEncontrado) {
-              setValue("c_cliente_id", clienteIdString)
-              console.log("✅ Cliente definido:", clienteEncontrado.nome_completo)
-            }
-          }
+          // Definir valores com timeout para garantir que o DOM esteja pronto
+          setTimeout(() => {
+            // Verificar e definir cada campo
+            Object.entries(formData).forEach(([key, value]) => {
+              if (value) {
+                setValue(key as keyof FormValues, value)
+                console.log(`✅ Campo ${key} definido com valor:`, value)
+              }
+            })
 
+            formInitialized.current = true
+            console.log("Formulário inicializado com sucesso")
+          }, 100)
+        } else {
+          // Novo veículo - resetar formulário
+          console.log("Inicializando formulário para novo veículo")
+          reset({
+            placa: "",
+            descricao: "",
+            v_modelo_id: "",
+            v_cor_id: "",
+            v_fabricante_id: "",
+            c_cliente_id: "",
+          })
           formInitialized.current = true
-        }, 300)
+        }
       }
     }
 
@@ -333,6 +293,7 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
   // Resetar o estado de inicialização quando o veículo mudar
   useEffect(() => {
     formInitialized.current = false
+    setDebugInfo("")
   }, [veiculo?.id])
 
   const onSubmit = async (data: FormValues) => {
@@ -372,8 +333,8 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       const url = veiculo
         ? `${process.env.NEXT_PUBLIC_API_URL}api/v1/v_veiculos/${veiculo.id}`
         : `${process.env.NEXT_PUBLIC_API_URL}api/v1/v_veiculos`
-
       const method = veiculo ? "PUT" : "POST"
+
       console.log(`Enviando requisição ${method} para ${url}`)
 
       const response = await fetch(url, {
@@ -392,6 +353,7 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
       toast.success(veiculo ? "Veículo atualizado com sucesso" : "Veículo criado com sucesso", {
         duration: 2000,
       })
+
       onSuccess()
       reset()
       formInitialized.current = false
@@ -417,6 +379,15 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
         <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md mb-4">
           <p className="text-sm text-yellow-800 font-medium">Informações de depuração:</p>
           <p className="text-xs text-yellow-700 mt-1">{debugInfo}</p>
+        </div>
+      )}
+
+      {/* Indicador de modo de edição */}
+      {veiculo && (
+        <div className="bg-blue-50 border border-blue-200 p-3 rounded-md mb-4">
+          <p className="text-sm text-blue-800 font-medium">
+            Editando veículo: {veiculo.placa} - {veiculo.descricao}
+          </p>
         </div>
       )}
 
