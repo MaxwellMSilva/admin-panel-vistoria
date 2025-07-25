@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Cookies from "js-cookie"
-import { Loader2 } from "lucide-react"
+import { Loader2, User, Edit3, MapPin, FileText, Phone, Mail, CreditCard } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 type NovoClienteFormProps = {
   onSuccess: () => void
@@ -110,6 +111,7 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
       if (!token) throw new Error("Token não encontrado")
 
       console.log("Buscando cliente por ID:", clienteId)
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/c_clientes/${clienteId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -186,12 +188,10 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
 
           if (cidadeEncontrada) {
             console.log("✅ Cidade encontrada:", cidadeEncontrada.descricao)
-
             // Definir o valor da cidade com delay para garantir que o DOM esteja pronto
             setTimeout(() => {
               setValue("g_cidade_id", cidadeIdString)
               console.log("Valor da cidade definido:", cidadeIdString)
-
               // Verificar se foi definido corretamente
               setTimeout(() => {
                 const selectElement = document.querySelector('select[name="g_cidade_id"]') as HTMLSelectElement
@@ -205,7 +205,6 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
                   }
                 }
               }, 100)
-
               formInitialized.current = true
             }, 200)
           } else {
@@ -266,8 +265,8 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
       const url = cliente
         ? `${process.env.NEXT_PUBLIC_API_URL}api/v1/c_clientes/${cliente.id}`
         : `${process.env.NEXT_PUBLIC_API_URL}api/v1/c_clientes`
-
       const method = cliente ? "PUT" : "POST"
+
       console.log(`Enviando requisição ${method} para ${url}`)
 
       const response = await fetch(url, {
@@ -293,6 +292,14 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
     }
   }
 
+  // Função para obter o nome da cidade
+  const getNomeCidade = (cidadeId: string | number) => {
+    const cidade = cidades.find((c) => c.id.toString() === cidadeId.toString())
+    return cidade
+      ? `${cidade.descricao}${cidade.g_estado?.uf_descricao ? ` - ${cidade.g_estado.uf_descricao}` : ""}`
+      : "Cidade não encontrada"
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -304,206 +311,358 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
 
   return (
     <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
-      {/* Nome Completo */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="nome_completo" className="font-bold mb-2">
-          Nome:
-        </Label>
-        <Input
-          id="nome_completo"
-          {...register("nome_completo", { required: "Nome é obrigatório" })}
-          placeholder="Digite o nome completo do cliente..."
-        />
-        {errors.nome_completo && <span className="text-sm text-red-500">{errors.nome_completo.message}</span>}
-      </div>
-
-      {/* CPF/CNPJ */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="cpf_cnpj" className="font-bold mb-2">
-          CPF/CNPJ:
-        </Label>
-        <Input
-          id="cpf_cnpj"
-          {...register("cpf_cnpj", { required: "CPF/CNPJ é obrigatório" })}
-          placeholder="Digite o CPF ou CNPJ do cliente..."
-        />
-        {errors.cpf_cnpj && <span className="text-sm text-red-500">{errors.cpf_cnpj.message}</span>}
-      </div>
-
-      {/* RG */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="rg" className="font-bold mb-2">
-          RG:
-        </Label>
-        <Input id="rg" {...register("rg", { required: "RG é obrigatório" })} placeholder="Digite o RG do cliente..." />
-        {errors.rg && <span className="text-sm text-red-500">{errors.rg.message}</span>}
-      </div>
-
-      {/* Telefone */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="telefone" className="font-bold mb-2">
-          Telefone:
-        </Label>
-        <Input
-          id="telefone"
-          {...register("telefone", { required: "Telefone é obrigatório" })}
-          placeholder="Digite o telefone do cliente..."
-        />
-        {errors.telefone && <span className="text-sm text-red-500">{errors.telefone.message}</span>}
-      </div>
-
-      {/* Email */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="email" className="font-bold mb-2">
-          Email:
-        </Label>
-        <Input
-          id="email"
-          {...register("email", { required: "Email é obrigatório" })}
-          placeholder="Digite o email do cliente..."
-        />
-        {errors.email && <span className="text-sm text-red-500">{errors.email.message}</span>}
-      </div>
-
-      {/* CEP */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="cep" className="font-bold mb-2">
-          CEP:
-        </Label>
-        <Input
-          id="cep"
-          {...register("cep", { required: "CEP é obrigatório" })}
-          placeholder="Digite o CEP do cliente..."
-        />
-        {errors.cep && <span className="text-sm text-red-500">{errors.cep.message}</span>}
-      </div>
-
-      {/* Rua */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="rua" className="font-bold mb-2">
-          Rua:
-        </Label>
-        <Input
-          id="rua"
-          {...register("rua", { required: "Rua é obrigatória" })}
-          placeholder="Digite a rua do cliente..."
-        />
-        {errors.rua && <span className="text-sm text-red-500">{errors.rua.message}</span>}
-      </div>
-
-      {/* Número Residencial */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="numero_residencial" className="font-bold mb-2">
-          Número Residencial:
-        </Label>
-        <Input
-          id="numero_residencial"
-          {...register("numero_residencial", { required: "Número residencial é obrigatório" })}
-          placeholder="Digite o número residencial..."
-        />
-        {errors.numero_residencial && <span className="text-sm text-red-500">{errors.numero_residencial.message}</span>}
-      </div>
-
-      {/* Bairro */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="bairro" className="font-bold mb-2">
-          Bairro:
-        </Label>
-        <Input
-          id="bairro"
-          {...register("bairro", { required: "Bairro é obrigatório" })}
-          placeholder="Digite o bairro do cliente..."
-        />
-        {errors.bairro && <span className="text-sm text-red-500">{errors.bairro.message}</span>}
-      </div>
-
-      {/* Complemento */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="complemento" className="font-bold mb-2">
-          Complemento:
-        </Label>
-        <Input
-          id="complemento"
-          {...register("complemento", { required: "Complemento é obrigatório" })}
-          placeholder="Digite o complemento do endereço..."
-        />
-        {errors.complemento && <span className="text-sm text-red-500">{errors.complemento.message}</span>}
-      </div>
-
-      {/* Cidade - Select Nativo */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="g_cidade_id" className="font-bold mb-2">
-          Cidade:
-        </Label>
-        <div className="relative">
-          <Controller
-            name="g_cidade_id"
-            control={control}
-            rules={{ required: "Cidade é obrigatória" }}
-            render={({ field }) => (
-              <select
-                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
-                value={field.value?.toString() || ""}
-                onChange={(e) => {
-                  field.onChange(e.target.value)
-                  console.log("Cidade selecionada:", e.target.value)
-                }}
-              >
-                <option value="" disabled>
-                  Selecione uma cidade
-                </option>
-                {cidades.map((cidade) => (
-                  <option key={cidade.id} value={cidade.id.toString()}>
-                    {cidade.descricao} {cidade.g_estado?.uf_descricao ? `- ${cidade.g_estado.uf_descricao}` : ""}
-                  </option>
-                ))}
-              </select>
-            )}
-          />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
+      {/* Indicador de modo de edição */}
+      {cliente ? (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <Edit3 className="w-5 h-5 text-blue-600" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-lg font-semibold text-blue-900">Editando Cliente</h3>
+                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                  <User className="w-3 h-3 mr-1" />
+                  ID: {cliente.id}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="font-medium text-blue-700 flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    Nome:
+                  </span>
+                  <p className="text-blue-900 truncate">{cliente.nome_completo}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-blue-700 flex items-center gap-1">
+                    <CreditCard className="w-3 h-3" />
+                    CPF/CNPJ:
+                  </span>
+                  <p className="text-blue-900">{cliente.cpf_cnpj}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-blue-700 flex items-center gap-1">
+                    <Phone className="w-3 h-3" />
+                    Telefone:
+                  </span>
+                  <p className="text-blue-900">{cliente.telefone}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-blue-700 flex items-center gap-1">
+                    <Mail className="w-3 h-3" />
+                    Email:
+                  </span>
+                  <p className="text-blue-900 truncate">{cliente.email}</p>
+                </div>
+                {cliente.g_cidade_id && (
+                  <div className="sm:col-span-2">
+                    <span className="font-medium text-blue-700 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      Cidade:
+                    </span>
+                    <p className="text-blue-900">{getNomeCidade(cliente.g_cidade_id)}</p>
+                  </div>
+                )}
+              </div>
+              <div className="mt-3 p-2 bg-blue-100 rounded-md">
+                <p className="text-xs text-blue-700">
+                  💡 <strong>Dica:</strong> Você está editando os dados do cliente. Todos os campos serão atualizados
+                  com as novas informações.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-        {errors.g_cidade_id && <span className="text-sm text-red-500">{errors.g_cidade_id.message}</span>}
-        {cidades.length === 0 && !loading && <span className="text-sm text-amber-500">Nenhuma cidade encontrada.</span>}
+      ) : (
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 mb-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <User className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-green-900">Novo Cliente</h3>
+              <p className="text-sm text-green-700">
+                Preencha os dados abaixo para cadastrar um novo cliente no sistema.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Seção: Dados Pessoais */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <User className="w-4 h-4" />
+          Dados Pessoais
+        </h4>
+        <div className="grid grid-cols-1 gap-4">
+          {/* Nome Completo */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="nome_completo" className="font-bold mb-2">
+              Nome:
+            </Label>
+            <Input
+              id="nome_completo"
+              {...register("nome_completo", { required: "Nome é obrigatório" })}
+              placeholder="Digite o nome completo do cliente..."
+            />
+            {errors.nome_completo && (
+              <span className="text-sm text-red-500">{errors.nome_completo.message}</span>
+            )}
+          </div>
+
+          {/* CPF/CNPJ */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="cpf_cnpj" className="font-bold mb-2">
+              CPF/CNPJ:
+            </Label>
+            <Input
+              id="cpf_cnpj"
+              {...register("cpf_cnpj", { required: "CPF/CNPJ é obrigatório" })}
+              placeholder="Digite o CPF ou CNPJ do cliente..."
+            />
+            {errors.cpf_cnpj && (
+              <span className="text-sm text-red-500">{errors.cpf_cnpj.message}</span>
+            )}
+          </div>
+
+          {/* RG */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="rg" className="font-bold mb-2">
+              RG:
+            </Label>
+            <Input
+              id="rg"
+              {...register("rg", { required: "RG é obrigatório" })}
+              placeholder="Digite o RG do cliente..."
+            />
+            {errors.rg && <span className="text-sm text-red-500">{errors.rg.message}</span>}
+          </div>
+
+          {/* Telefone */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="telefone" className="font-bold mb-2">
+              Telefone:
+            </Label>
+            <Input
+              id="telefone"
+              {...register("telefone", { required: "Telefone é obrigatório" })}
+              placeholder="Digite o telefone do cliente..."
+            />
+            {errors.telefone && (
+              <span className="text-sm text-red-500">{errors.telefone.message}</span>
+            )}
+          </div>
+
+          {/* Email */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="email" className="font-bold mb-2">
+              Email:
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              {...register("email", {
+                required: "Email é obrigatório",
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Email inválido",
+                },
+              })}
+              placeholder="Digite o email do cliente..."
+            />
+            {errors.email && <span className="text-sm text-red-500">{errors.email.message}</span>}
+          </div>
+        </div>
       </div>
 
-      {/* Arquivos */}
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="anexo_cpf" className="font-bold mb-2">
-          Anexo CPF:
-        </Label>
-        <Input id="anexo_cpf" type="file" {...register("anexo_cpf")} />
+      {/* Seção: Endereço */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <MapPin className="w-4 h-4" />
+          Endereço
+        </h4>
+        <div className="grid grid-cols-1 gap-4">
+          {/* CEP */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="cep" className="font-bold mb-2">
+              CEP:
+            </Label>
+            <Input
+              id="cep"
+              {...register("cep", { required: "CEP é obrigatório" })}
+              placeholder="Digite o CEP do cliente..."
+            />
+            {errors.cep && <span className="text-sm text-red-500">{errors.cep.message}</span>}
+          </div>
+
+          {/* Rua */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="rua" className="font-bold mb-2">
+              Rua:
+            </Label>
+            <Input
+              id="rua"
+              {...register("rua", { required: "Rua é obrigatória" })}
+              placeholder="Digite a rua do cliente..."
+            />
+            {errors.rua && <span className="text-sm text-red-500">{errors.rua.message}</span>}
+          </div>
+
+          {/* Número Residencial */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="numero_residencial" className="font-bold mb-2">
+              Número:
+            </Label>
+            <Input
+              id="numero_residencial"
+              {...register("numero_residencial", { required: "Número residencial é obrigatório" })}
+              placeholder="Digite o número..."
+            />
+            {errors.numero_residencial && (
+              <span className="text-sm text-red-500">{errors.numero_residencial.message}</span>
+            )}
+          </div>
+
+          {/* Bairro */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="bairro" className="font-bold mb-2">
+              Bairro:
+            </Label>
+            <Input
+              id="bairro"
+              {...register("bairro", { required: "Bairro é obrigatório" })}
+              placeholder="Digite o bairro..."
+            />
+            {errors.bairro && <span className="text-sm text-red-500">{errors.bairro.message}</span>}
+          </div>
+
+          {/* Complemento */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="complemento" className="font-bold mb-2">
+              Complemento:
+            </Label>
+            <Input
+              id="complemento"
+              {...register("complemento", { required: "Complemento é obrigatório" })}
+              placeholder="Digite o complemento..."
+            />
+            {errors.complemento && <span className="text-sm text-red-500">{errors.complemento.message}</span>}
+          </div>
+
+          {/* Cidade */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="g_cidade_id" className="font-bold mb-2">
+              Cidade:
+            </Label>
+            <div className="relative">
+              <Controller
+                name="g_cidade_id"
+                control={control}
+                rules={{ required: "Cidade é obrigatória" }}
+                render={({ field }) => (
+                  <select
+                    className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                    value={field.value?.toString() || ""}
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                      console.log("Cidade selecionada:", e.target.value);
+                    }}
+                  >
+                    <option value="" disabled>
+                      Selecione uma cidade
+                    </option>
+                    {cidades.map((cidade) => (
+                      <option key={cidade.id} value={cidade.id.toString()}>
+                        {cidade.descricao} {cidade.g_estado?.uf_descricao ? `- ${cidade.g_estado.uf_descricao}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+            </div>
+            {errors.g_cidade_id && <span className="text-sm text-red-500">{errors.g_cidade_id.message}</span>}
+            {cidades.length === 0 && !loading && (
+              <span className="text-sm text-amber-500">Nenhuma cidade encontrada.</span>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="anexo_rg" className="font-bold mb-2">
-          Anexo RG:
-        </Label>
-        <Input id="anexo_rg" type="file" {...register("anexo_rg")} />
-      </div>
+      {/* Seção: Documentos */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <FileText className="w-4 h-4" />
+          Documentos
+        </h4>
 
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="anexo_comprovante_residencia" className="font-bold mb-2">
-          Comprovante de Residência:
-        </Label>
-        <Input id="anexo_comprovante_residencia" type="file" {...register("anexo_comprovante_residencia")} />
+        <div className="flex flex-col gap-4">
+          {/* Anexo CPF */}
+          <div className="flex flex-col">
+            <Label htmlFor="anexo_cpf" className="font-bold mb-2">
+              Anexo CPF:
+            </Label>
+            <Input
+              id="anexo_cpf"
+              type="file"
+              {...register("anexo_cpf")}
+              accept=".pdf,.jpg,.jpeg,.png"
+              className="h-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </div>
+
+          {/* Anexo RG */}
+          <div className="flex flex-col">
+            <Label htmlFor="anexo_rg" className="font-bold mb-2">
+              Anexo RG:
+            </Label>
+            <Input
+              id="anexo_rg"
+              type="file"
+              {...register("anexo_rg")}
+              accept=".pdf,.jpg,.jpeg,.png"
+              className="h-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </div>
+
+          {/* Comprovante de Residência */}
+          <div className="flex flex-col">
+            <Label htmlFor="anexo_comprovante_residencia" className="font-bold mb-2">
+              Comprovante de Residência:
+            </Label>
+            <Input
+              id="anexo_comprovante_residencia"
+              type="file"
+              {...register("anexo_comprovante_residencia")}
+              accept=".pdf,.jpg,.jpeg,.png"
+              className="h-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-500 mt-4">📎 Formatos aceitos: PDF, JPG, JPEG, PNG</p>
       </div>
 
       {/* Botões */}
-      <div className="flex justify-end gap-2 pt-4">
+      <div className="flex justify-end gap-2 pt-6 border-t border-gray-200">
         <Button
           type="button"
           variant="outline"
@@ -512,19 +671,20 @@ export function NovoClienteForm({ onSuccess, onCancel, cliente }: NovoClienteFor
             formInitialized.current = false
             onCancel()
           }}
+          className="px-6"
         >
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting} className="bg-red-500 hover:bg-red-600 text-white px-6">
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Salvando...
+              {cliente ? "Atualizando..." : "Salvando..."}
             </>
           ) : cliente ? (
-            "Atualizar"
+            "Atualizar Cliente"
           ) : (
-            "Salvar"
+            "Criar Cliente"
           )}
         </Button>
       </div>

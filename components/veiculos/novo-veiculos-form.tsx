@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Cookies from "js-cookie"
-import { Loader2 } from "lucide-react"
+import { Loader2, Car, Edit3, User, Palette, Factory, Settings } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 type VeiculoFormProps = {
   onSuccess: () => void
@@ -375,6 +376,97 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
 
   return (
     <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+      {/* Indicador de modo de edição */}
+      {veiculo ? (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <Edit3 className="w-5 h-5 text-blue-600" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-lg font-semibold text-blue-900">Editando Veículo</h3>
+                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                  <Car className="w-3 h-3 mr-1" />
+                  ID: {veiculo.id}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="font-medium text-blue-700 flex items-center gap-1">
+                    <Car className="w-3 h-3" />
+                    Placa:
+                  </span>
+                  <p className="text-blue-900 font-mono">{veiculo.placa}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-blue-700">Descrição:</span>
+                  <p className="text-blue-900 truncate">{veiculo.descricao}</p>
+                </div>
+                {veiculo.v_modelo_id && modelos.length > 0 && (
+                  <div>
+                    <span className="font-medium text-blue-700">Modelo:</span>
+                    <p className="text-blue-900">
+                      {modelos.find((m) => m.id.toString() === veiculo.v_modelo_id?.toString())?.descricao ||
+                        "Modelo não encontrado"}
+                    </p>
+                  </div>
+                )}
+                {veiculo.v_cor_id && cores.length > 0 && (
+                  <div>
+                    <span className="font-medium text-blue-700">Cor:</span>
+                    <p className="text-blue-900">
+                      {cores.find((c) => c.id.toString() === veiculo.v_cor_id?.toString())?.descricao ||
+                        "Cor não encontrada"}
+                    </p>
+                  </div>
+                )}
+                {veiculo.v_fabricante_id && fabricantes.length > 0 && (
+                  <div>
+                    <span className="font-medium text-blue-700">Fabricante:</span>
+                    <p className="text-blue-900">
+                      {fabricantes.find((f) => f.id.toString() === veiculo.v_fabricante_id?.toString())?.descricao ||
+                        "Fabricante não encontrado"}
+                    </p>
+                  </div>
+                )}
+                {veiculo.c_cliente_id && clientes.length > 0 && (
+                  <div>
+                    <span className="font-medium text-blue-700">Cliente:</span>
+                    <p className="text-blue-900">
+                      {clientes.find((c) => c.id.toString() === veiculo.c_cliente_id?.toString())?.nome_completo ||
+                        "Cliente não encontrado"}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="mt-3 p-2 bg-blue-100 rounded-md">
+                <p className="text-xs text-blue-700">
+                  💡 <strong>Dica:</strong> Você está editando os dados do veículo. Todos os campos serão atualizados
+                  com as novas informações.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 mb-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <Car className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-green-900">Novo Veículo</h3>
+              <p className="text-sm text-green-700">
+                Preencha os dados abaixo para cadastrar um novo veículo no sistema.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {debugInfo && (
         <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md mb-4">
           <p className="text-sm text-yellow-800 font-medium">Informações de depuração:</p>
@@ -382,236 +474,244 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
         </div>
       )}
 
-      {/* Indicador de modo de edição */}
-      {veiculo && (
-        <div className="bg-blue-50 border border-blue-200 p-3 rounded-md mb-4">
-          <p className="text-sm text-blue-800 font-medium">
-            Editando veículo: {veiculo.placa} - {veiculo.descricao}
-          </p>
-        </div>
-      )}
+      {/* Seção: Dados Básicos do Veículo */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <Car className="w-4 h-4" />
+          Dados Básicos do Veículo
+        </h4>
+        <div className="grid grid-cols-1 gap-4">
+          {/* Placa */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="placa" className="font-bold mb-2">
+              Placa:
+            </Label>
+            <Input
+              id="placa"
+              {...register("placa", {
+                required: "Placa é obrigatória",
+                minLength: {
+                  value: 7,
+                  message: "Placa deve ter pelo menos 7 caracteres",
+                },
+              })}
+              placeholder="Digite a placa do veículo..."
+              className="font-mono"
+            />
+            {errors.placa && <span className="text-sm text-red-500">{errors.placa.message}</span>}
+          </div>
 
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="placa" className="font-bold mb-2">
-          Placa:
-        </Label>
-        <Input id="placa" {...register("placa", { required: true })} placeholder="Digite a placa..." />
-        {errors.placa && <span className="text-sm text-red-500">Placa é obrigatória</span>}
-      </div>
-
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="descricao" className="font-bold mb-2">
-          Descrição:
-        </Label>
-        <Input id="descricao" {...register("descricao", { required: true })} placeholder="Digite a descrição..." />
-        {errors.descricao && <span className="text-sm text-red-500">Descrição é obrigatória</span>}
-      </div>
-
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="v_modelo_id" className="font-bold mb-2">
-          Modelo:
-        </Label>
-        <div className="relative">
-          <Controller
-            name="v_modelo_id"
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <select
-                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
-                value={field.value?.toString() || ""}
-                onChange={(e) => {
-                  field.onChange(e.target.value)
-                  console.log("Modelo selecionado:", e.target.value)
-                }}
-              >
-                <option value="" disabled>
-                  Selecione um modelo
-                </option>
-                {modelos.map((modelo) => (
-                  <option key={modelo.id} value={modelo.id.toString()}>
-                    {modelo.descricao}
-                  </option>
-                ))}
-              </select>
-            )}
-          />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
+          {/* Descrição */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="descricao" className="font-bold mb-2">
+              Descrição:
+            </Label>
+            <Input
+              id="descricao"
+              {...register("descricao", {
+                required: "Descrição é obrigatória",
+                minLength: {
+                  value: 3,
+                  message: "Descrição deve ter pelo menos 3 caracteres",
+                },
+              })}
+              placeholder="Digite a descrição do veículo..."
+            />
+            {errors.descricao && <span className="text-sm text-red-500">{errors.descricao.message}</span>}
           </div>
         </div>
-        {errors.v_modelo_id && <span className="text-sm text-red-500">Modelo é obrigatório</span>}
-        {modelos.length === 0 && !loading && (
-          <span className="text-sm text-amber-500">Nenhum modelo encontrado. Cadastre um modelo primeiro.</span>
-        )}
       </div>
 
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="v_cor_id" className="font-bold mb-2">
-          Cor:
-        </Label>
-        <div className="relative">
-          <Controller
-            name="v_cor_id"
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <select
-                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
-                value={field.value?.toString() || ""}
-                onChange={(e) => {
-                  field.onChange(e.target.value)
-                  console.log("Cor selecionada:", e.target.value)
-                }}
-              >
-                <option value="" disabled>
-                  Selecione uma cor
-                </option>
-                {cores.map((cor) => (
-                  <option key={cor.id} value={cor.id.toString()}>
-                    {cor.descricao}
-                  </option>
-                ))}
-              </select>
-            )}
-          />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clipRule="evenodd"
+      {/* Seção: Especificações Técnicas */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <Settings className="w-4 h-4" />
+          Especificações Técnicas
+        </h4>
+        <div className="grid grid-cols-1 gap-4">
+          {/* Modelo */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="v_modelo_id" className="font-bold mb-2 flex items-center gap-2">
+              <Car className="w-4 h-4" />
+              Modelo:
+            </Label>
+            <div className="relative">
+              <Controller
+                name="v_modelo_id"
+                control={control}
+                rules={{ required: "Modelo é obrigatório" }}
+                render={({ field }) => (
+                  <select
+                    className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
+                    value={field.value?.toString() || ""}
+                    onChange={(e) => {
+                      field.onChange(e.target.value)
+                      console.log("Modelo selecionado:", e.target.value)
+                    }}
+                  >
+                    <option value="" disabled>Selecione um modelo</option>
+                    {modelos.map((modelo) => (
+                      <option key={modelo.id} value={modelo.id.toString()}>{modelo.descricao}</option>
+                    ))}
+                  </select>
+                )}
               />
-            </svg>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+            {errors.v_modelo_id && <span className="text-sm text-red-500">{errors.v_modelo_id.message}</span>}
+            {modelos.length === 0 && !loading && (
+              <span className="text-sm text-amber-500">Nenhum modelo encontrado. Cadastre um modelo primeiro.</span>
+            )}
+          </div>
+
+          {/* Fabricante */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="v_fabricante_id" className="font-bold mb-2 flex items-center gap-2">
+              <Factory className="w-4 h-4" />
+              Fabricante:
+            </Label>
+            <div className="relative">
+              <Controller
+                name="v_fabricante_id"
+                control={control}
+                rules={{ required: "Fabricante é obrigatório" }}
+                render={({ field }) => (
+                  <select
+                    className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
+                    value={field.value?.toString() || ""}
+                    onChange={(e) => {
+                      field.onChange(e.target.value)
+                      console.log("Fabricante selecionado:", e.target.value)
+                    }}
+                  >
+                    <option value="" disabled>Selecione um fabricante</option>
+                    {fabricantes.map((fabricante) => (
+                      <option key={fabricante.id} value={fabricante.id.toString()}>{fabricante.descricao}</option>
+                    ))}
+                  </select>
+                )}
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+            {errors.v_fabricante_id && <span className="text-sm text-red-500">{errors.v_fabricante_id.message}</span>}
+            {fabricantes.length === 0 && !loading && (
+              <span className="text-sm text-amber-500">Nenhum fabricante encontrado. Cadastre um fabricante primeiro.</span>
+            )}
+          </div>
+
+          {/* Cor */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="v_cor_id" className="font-bold mb-2 flex items-center gap-2">
+              <Palette className="w-4 h-4" />
+              Cor:
+            </Label>
+            <div className="relative">
+              <Controller
+                name="v_cor_id"
+                control={control}
+                rules={{ required: "Cor é obrigatória" }}
+                render={({ field }) => (
+                  <select
+                    className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
+                    value={field.value?.toString() || ""}
+                    onChange={(e) => {
+                      field.onChange(e.target.value)
+                      console.log("Cor selecionada:", e.target.value)
+                    }}
+                  >
+                    <option value="" disabled>Selecione uma cor</option>
+                    {cores.map((cor) => (
+                      <option key={cor.id} value={cor.id.toString()}>{cor.descricao}</option>
+                    ))}
+                  </select>
+                )}
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+            {errors.v_cor_id && <span className="text-sm text-red-500">{errors.v_cor_id.message}</span>}
+            {cores.length === 0 && !loading && (
+              <span className="text-sm text-amber-500">Nenhuma cor encontrada. Cadastre uma cor primeiro.</span>
+            )}
           </div>
         </div>
-        {errors.v_cor_id && <span className="text-sm text-red-500">Cor é obrigatória</span>}
-        {cores.length === 0 && !loading && (
-          <span className="text-sm text-amber-500">Nenhuma cor encontrada. Cadastre uma cor primeiro.</span>
-        )}
       </div>
 
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="v_fabricante_id" className="font-bold mb-2">
-          Fabricante:
-        </Label>
-        <div className="relative">
-          <Controller
-            name="v_fabricante_id"
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <select
-                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
-                value={field.value?.toString() || ""}
-                onChange={(e) => {
-                  field.onChange(e.target.value)
-                  console.log("Fabricante selecionado:", e.target.value)
-                }}
-              >
-                <option value="" disabled>
-                  Selecione um fabricante
-                </option>
-                {fabricantes.map((fabricante) => (
-                  <option key={fabricante.id} value={fabricante.id.toString()}>
-                    {fabricante.descricao}
-                  </option>
-                ))}
-              </select>
-            )}
-          />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clipRule="evenodd"
+      {/* Seção: Proprietário */}
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <User className="w-4 h-4" />
+          Proprietário
+        </h4>
+        <div className="grid grid-cols-1 gap-4">
+          {/* Cliente */}
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="c_cliente_id" className="font-bold mb-2 flex items-center gap-2">
+              <User className="w-4 h-4" />
+              Cliente:
+            </Label>
+            <div className="relative">
+              <Controller
+                name="c_cliente_id"
+                control={control}
+                rules={{ required: "Cliente é obrigatório" }}
+                render={({ field }) => (
+                  <select
+                    className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
+                    value={field.value?.toString() || ""}
+                    onChange={(e) => {
+                      field.onChange(e.target.value)
+                      console.log("Cliente selecionado:", e.target.value)
+                    }}
+                  >
+                    <option value="" disabled>
+                      Selecione um cliente
+                    </option>
+                    {clientes.map((cliente) => (
+                      <option key={cliente.id} value={cliente.id.toString()}>
+                        {cliente.nome_completo} - {cliente.cpf_cnpj}
+                      </option>
+                    ))}
+                  </select>
+                )}
               />
-            </svg>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+            </div>
+            {errors.c_cliente_id && <span className="text-sm text-red-500">{errors.c_cliente_id.message}</span>}
+            {clientes.length === 0 && !loading && (
+              <span className="text-sm text-amber-500">Nenhum cliente encontrado. Cadastre um cliente primeiro.</span>
+            )}
           </div>
         </div>
-        {errors.v_fabricante_id && <span className="text-sm text-red-500">Fabricante é obrigatório</span>}
-        {fabricantes.length === 0 && !loading && (
-          <span className="text-sm text-amber-500">Nenhum fabricante encontrado. Cadastre um fabricante primeiro.</span>
-        )}
       </div>
 
-      <div className="flex flex-col gap-1 mb-4">
-        <Label htmlFor="c_cliente_id" className="font-bold mb-2">
-          Cliente:
-        </Label>
-        <div className="relative">
-          <Controller
-            name="c_cliente_id"
-            control={control}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <select
-                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
-                value={field.value?.toString() || ""}
-                onChange={(e) => {
-                  field.onChange(e.target.value)
-                  console.log("Cliente selecionado:", e.target.value)
-                }}
-              >
-                <option value="" disabled>
-                  Selecione um cliente
-                </option>
-                {clientes.map((cliente) => (
-                  <option key={cliente.id} value={cliente.id.toString()}>
-                    {cliente.nome_completo} - {cliente.cpf_cnpj}
-                  </option>
-                ))}
-              </select>
-            )}
-          />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-        </div>
-        {errors.c_cliente_id && <span className="text-sm text-red-500">Cliente é obrigatório</span>}
-        {clientes.length === 0 && !loading && (
-          <span className="text-sm text-amber-500">Nenhum cliente encontrado. Cadastre um cliente primeiro.</span>
-        )}
-      </div>
-
-      <div className="flex justify-end gap-2 pt-4">
+      {/* Botões */}
+      <div className="flex justify-end gap-2 pt-6 border-t border-gray-200">
         <Button
           type="button"
           variant="outline"
@@ -620,19 +720,20 @@ export function NovoVeiculoForm({ onSuccess, onCancel, veiculo }: VeiculoFormPro
             formInitialized.current = false
             onCancel()
           }}
+          className="px-6"
         >
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting} className="bg-red-500 hover:bg-red-600">
+        <Button type="submit" disabled={isSubmitting} className="bg-red-500 hover:bg-red-600 text-white px-6">
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Salvando...
             </>
           ) : veiculo ? (
-            "Atualizar"
+            "Atualizar Veículo"
           ) : (
-            "Salvar"
+            "Criar Veículo"
           )}
         </Button>
       </div>

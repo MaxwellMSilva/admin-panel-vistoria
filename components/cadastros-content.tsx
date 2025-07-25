@@ -681,7 +681,10 @@ export function CadastrosContent() {
       <>
         {/* Cabeçalho com título e botão de novo cadastro */}
         <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-          <h1 className="text-2xl font-bold text-gray-800">Cadastros</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Cadastros</h1>
+            <p className="text-sm text-gray-500 mt-1">Gerencie seus cadastros</p>
+          </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
