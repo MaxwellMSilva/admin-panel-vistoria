@@ -17,6 +17,7 @@ import {
   UserCog,
   BadgeCheck,
   ClipboardCheck,
+  Briefcase,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Cookies from "js-cookie"
@@ -127,7 +128,7 @@ function SidebarContent({ currentPage, onNavigate }: { currentPage?: string; onN
       label: "Cargos",
       href: "/cargos",
       value: "cargos",
-      icon: BadgeCheck,
+      icon: Briefcase,
     },
   ]
 

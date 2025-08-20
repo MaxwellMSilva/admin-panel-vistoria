@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Cookies from "js-cookie"
 
-import { Search, Trash2, Pencil, Loader, BadgeCheck, ChevronLeft, ChevronRight, Filter, X } from "lucide-react"
+import { Search, Trash2, Pencil, Loader, UserPlus, ChevronLeft, ChevronRight, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
@@ -17,11 +17,7 @@ import { Badge } from "@/components/ui/badge"
 
 type Cargo = {
   id: string
-  nome: string
   descricao: string
-  nivel: number
-  ativo: boolean
-  permissoes?: string[]
 }
 
 export function CargosContent() {
@@ -29,7 +25,7 @@ export function CargosContent() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedCargo, setSelectedCargo] = useState<Cargo | null>(null)
+  const [selectedCargo, setSelectedCargos] = useState<Cargo | null>(null)
   const [loadingDelete, setLoadingDelete] = useState(false)
   const [loadingPagination, setLoadingPagination] = useState(false)
 
@@ -102,12 +98,11 @@ export function CargosContent() {
 
   const fetchCargos = async (page = 1) => {
     try {
-      setLoading(true)
       setLoadingPagination(true)
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/cargos?page=${page}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/c_cargos?page=${page}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -116,7 +111,7 @@ export function CargosContent() {
       if (!response.ok) throw new Error("Falha ao buscar cargos")
 
       const data = await response.json()
-      console.log("Cargos API Response:", data)
+      console.log("Carlos API Response:", data)
 
       const items = Array.isArray(data.data.items) ? data.data.items : []
       setCargos(items)
@@ -129,38 +124,6 @@ export function CargosContent() {
     } catch (error) {
       console.error("Erro ao buscar cargos:", error)
       toast.error("Não foi possível carregar os cargos", { duration: 1000 })
-
-      // Se a API ainda não estiver implementada, usar dados simulados
-      const mockCargos = [
-        {
-          id: "1",
-          nome: "Administrador",
-          descricao: "Acesso total ao sistema",
-          permissoes: ["dashboard", "cadastros", "clientes", "veiculos", "usuarios", "cargos"],
-        },
-        {
-          id: "2",
-          nome: "Gerente",
-          descricao: "Acesso a gestão de clientes e veículos",
-          permissoes: ["dashboard", "clientes", "veiculos"],
-        },
-        {
-          id: "3",
-          nome: "Operador",
-          descricao: "Acesso a cadastros básicos",
-          permissoes: ["dashboard", "cadastros"],
-        },
-        {
-          id: "4",
-          nome: "Atendente",
-          descricao: "Acesso a clientes",
-          permissoes: ["dashboard", "clientes"],
-        },
-      ]
-      setCargos(mockCargos)
-      setTotalPages(1)
-      setTotalItems(mockCargos.length)
-
       return false
     } finally {
       setLoading(false)
@@ -177,7 +140,7 @@ export function CargosContent() {
       const token = Cookies.get("access_token")
       if (!token) throw new Error("Token não encontrado")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/cargos/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/v1/c_cargos/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -186,10 +149,8 @@ export function CargosContent() {
 
       if (!response.ok) throw new Error("Falha ao excluir cargo")
 
-      // Após excluir, recarregar os dados da página atual
       const pageChanged = await fetchCargos(currentPage)
 
-      // Se a página não mudou (não estava vazia), mostrar mensagem de sucesso
       if (!pageChanged) {
         toast.success("Cargo excluído com sucesso", {
           duration: 1000,
@@ -200,10 +161,6 @@ export function CargosContent() {
       toast.error("Não foi possível excluir o cargo", {
         duration: 1000,
       })
-
-      // Se a API ainda não estiver implementada, remover localmente
-      setCargos((prev) => prev.filter((cargo) => cargo.id !== id))
-      toast.success("Cargo excluído com sucesso", { duration: 1000 })
     } finally {
       setLoadingDelete(false)
     }
@@ -223,26 +180,26 @@ export function CargosContent() {
     fetchCargos(1)
   }, [searchTerm])
 
-  const filteredCargos = cargos.filter(
-    (cargo) =>
-      cargo.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cargo.descricao.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredCargos = Array.isArray(cargos)
+    ? cargos.filter(
+        (cargo) =>
+          cargo.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : []
 
-  // Use this for displaying the count:
   const displayedItemsCount = filteredCargos.length
 
   const handleNovoCargoSuccess = () => {
     fetchCargos(currentPage)
     setIsDialogOpen(false)
-    setSelectedCargo(null)
+    setSelectedCargos(null)
   }
 
   const [currentPageNav, setCurrentPageNav] = useState("cargos")
 
   useEffect(() => {
     if (!isDialogOpen) {
-      setSelectedCargo(null)
+      setSelectedCargos(null)
     }
   }, [isDialogOpen])
 
@@ -256,85 +213,64 @@ export function CargosContent() {
     }
   }
 
-  // Generate page numbers for pagination
   const getPageNumbers = () => {
     const pageNumbers = []
-    const maxPageButtons = 3 // Reduzido para melhor visualização em dispositivos móveis
+    const maxPageButtons = 3
 
     if (totalPages <= maxPageButtons) {
-      // If we have fewer pages than the max, show all pages
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i)
       }
     } else {
-      // Always include first page
       pageNumbers.push(1)
 
-      // Calculate start and end of page range around current page
       let start = Math.max(2, currentPage - 1)
       let end = Math.min(totalPages - 1, currentPage + 1)
 
-      // Adjust if we're at the beginning
       if (currentPage <= 2) {
         end = Math.min(totalPages - 1, 3)
       }
 
-      // Adjust if we're at the end
       if (currentPage >= totalPages - 1) {
         start = Math.max(2, totalPages - 2)
       }
 
-      // Add ellipsis after first page if needed
       if (start > 2) {
         pageNumbers.push("...")
       }
 
-      // Add page numbers in the middle
       for (let i = start; i <= end; i++) {
         pageNumbers.push(i)
       }
 
-      // Add ellipsis before last page if needed
       if (end < totalPages - 1) {
         pageNumbers.push("...")
       }
 
-      // Always include last page
       pageNumbers.push(totalPages)
     }
 
     return pageNumbers
   }
 
-  // Função para limpar a busca
   const clearSearch = () => {
     setSearchTerm("")
   }
 
-  // Lista de permissões disponíveis
-  const permissoesDisponiveis = [
-    { id: "dashboard", label: "Dashboard" },
-    { id: "cadastros", label: "Cadastros" },
-    { id: "clientes", label: "Clientes" },
-    { id: "veiculos", label: "Veículos" },
-    { id: "usuarios", label: "Usuários" },
-    { id: "cargos", label: "Cargos" },
-  ]
-
   return (
     <Layout currentPage={currentPageNav} onNavigate={setCurrentPageNav}>
-      <div className="space-y-6">
+      <>
         {/* Cabeçalho com título e botão de novo cargo */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Cargos</h1>
-            <p className="text-sm text-gray-500 mt-1">Gerencie os cargos e permissões do sistema</p>
+            <p className="text-sm text-gray-500 mt-1">Gerencie seus cargos</p>
           </div>
 
           <Sheet open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <SheetTrigger asChild>
               <Button className="bg-red-500 hover:bg-red-600 text-white font-medium rounded-md flex items-center gap-2 transition-colors w-full sm:w-auto">
-                <BadgeCheck size={16} />
+                <UserPlus size={16} />
                 <span>Novo Cargo</span>
               </Button>
             </SheetTrigger>
@@ -353,7 +289,7 @@ export function CargosContent() {
                 onSuccess={handleNovoCargoSuccess}
                 onCancel={() => {
                   setIsDialogOpen(false)
-                  setSelectedCargo(null)
+                  setSelectedCargos(null)
                 }}
                 cargo={selectedCargo}
               />
@@ -362,43 +298,74 @@ export function CargosContent() {
         </div>
 
         {/* Filtros - Visíveis em todos os dispositivos */}
-        <Card className="border border-gray-200 shadow-sm">
-          <CardHeader className="p-4 pb-0">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+        <div className="mb-6 overflow-hidden border rounded-lg shadow-sm">
+          {/* Cabeçalho do filtro com gradiente */}
+          <div className="bg-gradient-to-r from-red-50 to-red-100 border-b px-4 py-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <Filter size={18} className="text-red-500" />
                 Filtros
-              </CardTitle>
+              </h2>
+              {searchTerm && (
+                <Badge
+                  variant="outline"
+                  className="bg-white text-red-600 border-red-200 flex items-center gap-1.5 px-3 py-1"
+                >
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                  Filtro ativo
+                </Badge>
+              )}
             </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="flex flex-col space-y-4">
-              <div className="w-full">
-                <label className="block text-sm font-medium mb-1">Buscar Cargos</label>
+          </div>
+
+          {/* Corpo do filtro */}
+          <div className="bg-gradient-to-b from-white to-gray-50 p-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-gray-700 gap-1.5">
+                  <Search size={14} className="text-gray-400" />
+                  Buscar Cargos
+                </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-gray-400" />
+                  </div>
                   <Input
-                    className="pl-10 w-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-                    placeholder="Buscar por nome ou descrição..."
+                    type="text"
+                    placeholder="Buscar por descrição..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10 py-2 border-gray-300 focus:ring-red-500 focus:border-red-500 block w-full rounded-md"
                   />
                   {searchTerm && (
                     <button
                       onClick={clearSearch}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                     >
-                      <X size={18} />
+                      <X className="h-4 w-4" />
                     </button>
                   )}
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {searchTerm && (
+              <div className="mt-4 pt-3 border-t border-dashed border-gray-200">
+                <div className="flex flex-wrap gap-2">
+                  <Badge className="bg-red-100 text-red-800 hover:bg-red-200 transition-colors px-3 py-1 flex items-center gap-1.5">
+                    <span>{searchTerm}</span>
+                    <button onClick={clearSearch} className="text-red-600 hover:text-red-800">
+                      <X size={14} />
+                    </button>
+                  </Badge>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Conteúdo principal */}
-        <Card className="border border-gray-200 shadow-sm">
+        <Card>
           <CardHeader className="p-4 pb-2">
             <div className="flex justify-between items-center">
               <div>
@@ -504,30 +471,14 @@ export function CargosContent() {
                       <div key={cargo.id} className="bg-white border rounded-lg p-4 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <h3 className="font-medium text-lg">{cargo.nome}</h3>
-                            <p className="text-sm text-gray-500 mb-2">{cargo.descricao}</p>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {cargo.permissoes &&
-                                cargo.permissoes.map((permissao) => {
-                                  const permissaoInfo = permissoesDisponiveis.find((p) => p.id === permissao)
-                                  return (
-                                    <Badge
-                                      key={permissao}
-                                      variant="outline"
-                                      className="bg-blue-50 text-blue-700 border-blue-200"
-                                    >
-                                      {permissaoInfo?.label || permissao}
-                                    </Badge>
-                                  )
-                                })}
-                            </div>
+                            <h3 className="font-medium text-lg">{cargo.descricao}</h3>
                           </div>
                           <div className="flex gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => {
-                                setSelectedCargo(cargo)
+                                setSelectedCargos(cargo)
                                 setIsDialogOpen(true)
                               }}
                               className="hover:bg-blue-50 transition-colors h-8 w-8"
@@ -559,16 +510,14 @@ export function CargosContent() {
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="bg-gray-50">
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Nome</th>
                         <th className="text-left py-3 px-4 font-semibold text-gray-700 border-b">Descrição</th>
-                        <th className="py-3 px-4 font-semibold text-gray-700 border-b">Permissões</th>
                         <th className="py-3 px-4 font-semibold text-gray-700 border-b text-right">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredCargos.length === 0 ? (
                         <tr>
-                          <td colSpan={4} className="py-12 text-center text-gray-500">
+                          <td colSpan={3} className="py-12 text-center text-gray-500">
                             <div className="flex flex-col items-center gap-2">
                               <p className="text-lg">Nenhum cargo encontrado</p>
                               <p className="text-sm text-gray-400">
@@ -580,32 +529,14 @@ export function CargosContent() {
                       ) : (
                         filteredCargos.map((cargo) => (
                           <tr key={cargo.id} className="border-b hover:bg-gray-50 transition-colors">
-                            <td className="py-3 px-4 text-gray-700">{cargo.nome}</td>
                             <td className="py-3 px-4 text-gray-700">{cargo.descricao}</td>
-                            <td className="py-3 px-4">
-                              <div className="flex flex-wrap gap-1">
-                                {cargo.permissoes &&
-                                  cargo.permissoes.map((permissao) => {
-                                    const permissaoInfo = permissoesDisponiveis.find((p) => p.id === permissao)
-                                    return (
-                                      <Badge
-                                        key={permissao}
-                                        variant="outline"
-                                        className="bg-blue-50 text-blue-700 border-blue-200"
-                                      >
-                                        {permissaoInfo?.label || permissao}
-                                      </Badge>
-                                    )
-                                  })}
-                              </div>
-                            </td>
                             <td className="py-3 px-4">
                               <div className="flex justify-end gap-2">
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => {
-                                    setSelectedCargo(cargo)
+                                    setSelectedCargos(cargo)
                                     setIsDialogOpen(true)
                                   }}
                                   className="hover:bg-blue-50 transition-colors"
@@ -671,7 +602,7 @@ export function CargosContent() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </>
     </Layout>
   )
 }
